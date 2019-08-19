@@ -1,0 +1,37 @@
+package Juggernaut
+import ClosureEvents
+import ClosureTimers
+import Constants
+import DummyCaster
+import AbilityObjEditing
+import ObjectIdGenerator
+import Orders
+import Utils
+
+constant JUGGERNAUT_SLOW = compiletime(ABIL_ID_GEN.next())
+
+init
+    EventListener.onCast(STAbilityIds.JUGGERNAUT) (caster) ->
+        let level = GetUnitAbilityLevel(caster, GetSpellAbilityId())
+        doPeriodicallyCounted(.05, 3) (CallbackCounted cb) ->
+            print("juggernaut casting " + level.toString())
+            println(GetSpellAbility().getField(ABILITY_RLF_MOVEMENT_SPEED_FACTOR_SLO1, level).toString())
+            if (new DummyCaster()..owner(caster.getOwner())..delay(.1).castTarget(JUGGERNAUT_SLOW, level, Orders.slow, caster) != null)
+                destroy cb
+                    
+                
+@compiletime function juggernautSlow()
+    new AbilityDefinitionSlow(JUGGERNAUT_SLOW)..setDummyAbilityLevels()
+    ..setRequiredLevel(6)
+    ..presetDurationHero((int lvl) -> 10.0)
+    ..presetMovementSpeedFactor((int lvl) -> .8 - .2 * lvl)
+    ..presetAttackSpeedFactor((int lvl) -> .8 - .2 * lvl)
+    ..presetBuffs((int lvl) -> STAbilityIds.JUGGERNAUT_BUFF)
+    ..presetTargetsAllowed((int lvl) -> "friend,enemy,ground,vulnerable,invulnerable")
+    ..setArtCaster("")
+        
+    
+        
+        
+
+            

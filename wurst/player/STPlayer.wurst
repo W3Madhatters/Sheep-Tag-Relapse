@@ -1,0 +1,140 @@
+package STPlayer
+import ClosureTimers
+import LinkedList
+import Constants
+import Utils
+
+public STPlayer array stPlayers
+public LinkedList<STPlayer> allPlayers = new LinkedList<STPlayer>()
+public hashtable playerCount = InitHashtable()
+
+public enum AfkStatus
+    ACTIVE
+    AFK
+    AFK_INCREMENT
+
+public function player.toSTP() returns STPlayer
+    return stPlayers[this.getId()]
+
+public function unit.toSTP() returns STPlayer
+    return stPlayers[this.getOwner().getId()]
+
+public function int.toSTP() returns STPlayer
+    return stPlayers[this]
+
+public class STPlayer
+
+    player p
+    int index
+
+    unit sheep
+    unit shepherd
+
+    LinkedList<unit> farms = new LinkedList<unit>()
+
+    AfkStatus status = AfkStatus.ACTIVE
+
+    int farmCount = 0
+    int income = 0
+    timer reviveTimer
+    int boardRow = 0
+    boolean controlAll = false
+    boolean visibleLeaderBoard = true
+    real zoom = 2200
+
+    real handicap = 1.0
+    real timeAsSheep = 0.0
+    real timeAsSheepLiving = 0.0
+    real timeAsSheepFirst = 0.0
+    int sheepPlayed = 0
+    int sheepCount = 0
+    int kills = 0
+    int totalKills = 0
+    int deaths = 0
+    int totalDeaths = 0
+    int saves = 0
+
+    construct(player p, int index)
+        this.p = p
+        this.index = index
+
+    function isActive() returns boolean
+        return p.isPlaying() and status == AfkStatus.ACTIVE
+
+    function getStartPosition() returns vec2
+        return START_POSITION[index]
+
+    function createSheep()
+        sheep = createSTUnit(getStartPosition(), STUnitIds.SHEEP)
+
+    function createShepherd()
+        shepherd = createSTUnit(FENCE_CENTER, STUnitIds.SHEPHERD)
+
+    function createWolf()
+        shepherd = createSTUnit(FENCE_CENTER, STUnitIds.WOLF) 
+
+    function createSTUnit(vec2 pos, int unitType) returns unit
+        let u = createUnit(p, unitType, pos, bj_UNIT_FACING.fromDeg())
+        selectAndPan(u)
+        return u
+
+    function selectAndPan(unit u)
+        p.select(u)
+        p.panCameraTo(u.getPos())
+
+    function removeLastFarm()
+        while (not farms.isEmpty())
+            let lastFarm = farms.pop()
+            if (lastFarm.isAlive())
+                lastFarm.remove()
+                farmCount -= 1
+                break
+
+    function destroyFarms(real percent)
+        let g = GetUnitsOfPlayerMatching(p, Filter(() -> GetFilterUnit().isStructure() and GetFilterUnit().isAlive()))
+        let g2 = GetRandomSubGroup((farmCount * percent).toInt(), g) // TODO - This function isn't very random
+        for u in g2 
+            u.setVertexColor(color(0, 0, 0))
+            u.setTimedLife(1.00 + ( u.getPos().distanceTo(FENCE_CENTER)) / 1500.00)
+        g.destr()
+        g2.destr()
+
+    function setIncome(int amount)
+        income = amount
+        p.setFoodUsed(amount)
+
+    function addIncome(int amount)
+        income += amount
+        p.setFoodUsed(income)
+        createTTEx(sheep.getPos3Real(), vec2(0, 32), "+" + amount.toString() + " income", 12, 1.5, colorA(238, 238, 0, 255), p)
+
+    function awardBounty(int amount)
+        p.addGold(amount)
+        createTTEx(sheep.getPos3Real(), vec2(0, 32), "+" + amount.toString(), 12, 1.5, colorA(238, 238, 0, 255), p)
+
+    function setZoom(real zoom)
+        this.zoom = zoom
+        setCamera()
+
+    function setCamera()
+        p.setCameraField(CAMERA_FIELD_ANGLE_OF_ATTACK, 304, 0)
+        p.setCameraField(CAMERA_FIELD_TARGET_DISTANCE, zoom, 0)
+
+    function toString() returns string
+        return p.getNameColored()
+
+    
+init
+    for i = 0 to MAX_PLAYERS - 1
+        if (players[i].isPlaying())
+            stPlayers[i] = new STPlayer(players[i], i)
+            allPlayers.push(stPlayers[i])
+                
+    doPeriodically(1.0) cb ->
+        allPlayers.forEach(stp -> stp.setCamera())    
+
+    
+    
+
+
+

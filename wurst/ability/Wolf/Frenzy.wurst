@@ -1,0 +1,39 @@
+package Frenzy
+import ClosureTimers
+import Constants
+import DummyCaster
+import AbilityObjEditing
+import ObjectIdGenerator
+import Orders
+import Utils
+import Abilities
+
+constant FRENZY_SPEED = compiletime(ABIL_ID_GEN.next())
+
+public function castFrenzy(unit u, int level)
+    doPeriodicallyCounted(.25, 20) (CallbackCounted cb) ->
+        print("attempting frenzy cast " + level.toString())
+        if (new DummyCaster()..owner(u.getOwner())..delay(.1).castTarget(FRENZY_SPEED, level, Orders.cripple, u) != null)
+            destroy cb               
+                
+@compiletime function frenzySpeed()
+    new AbilityDefinitionCripple(FRENZY_SPEED)..setDummyAbilityLevels()
+    ..setRequiredLevel(6)
+    ..presetAttackSpeedReduction((int lvl) -> -.2 * lvl)
+    ..presetMovementSpeedReduction((int lvl) -> -.02 - .04 * lvl)
+    ..presetDamageReduction((int lvl) -> -.15 * lvl)
+    ..presetBuffs((int lvl) -> STAbilityIds.FRENZY_BUFF)
+    ..presetDurationHero((int lvl) -> 2.0 + 2.0 * lvl)
+    ..presetDurationNormal((int lvl) -> 2.0 + 2.0 * lvl)
+    ..setArtTarget(Abilities.bloodLustTarget)
+    ..presetTargetsAllowed((int lvl) -> "friend,enemy,ground,vulnerable,invulnerable")
+
+    // new AbilityDefinitionBloodlust(FRENZY_SPEED)..setDummyAbilityLevels()
+    // ..setRequiredLevel(6)
+    // ..presetDurationHero((int lvl) -> 4)
+    // ..presetDurationNormal((int lvl) -> 4)
+    // ..presetAttackSpeedIncrease((int lvl) -> .2 * lvl)
+    // ..presetMovementSpeedIncrease((int lvl) -> .02 + .04 * lvl)
+    // ..presetScalingFactor((int lvl) -> 0)
+    // ..presetBuffs((int lvl) -> STAbilityIds.FRENZY_BUFF)
+    // ..presetTargetsAllowed((int lvl) -> "friend,enemy,ground,vulnerable,invulnerable")

@@ -1,0 +1,20 @@
+package OnUnitDamage
+import Cleave
+import Constants
+import Impale
+import DamageDetection
+import EventHelper
+
+function onUnitDamage()
+    let u = EventData.getEventDamageSource()
+    let t = EventData.getDamageTarget()
+    let amt = EventData.getEventDamage()
+    let attackType = EventData.getDamageAttackType()
+    if (attackType == ATTACK_TYPE_HERO and (amt > 0 or t.isIllusion()))
+        if (u.hasAbility(STAbilityIds.CLEAVE))
+            cleaveFarms(u, t, u.getAbilityLevel(STAbilityIds.CLEAVE) + 6.0)
+        else if (u.hasAbility(STAbilityIds.IMPALE_BUFF))
+            impaleTarget(u, t)
+
+init
+    addOnDamageFunc(() -> onUnitDamage())

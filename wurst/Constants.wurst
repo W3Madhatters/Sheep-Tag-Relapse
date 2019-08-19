@@ -1,0 +1,64 @@
+package Constants
+
+public int MAX_PLAYERS = 12
+
+public vec2 FENCE_CENTER = gg_rct_Fenze_Zone.getCenter()
+
+public player NEUTRAL_PASSIVE = Player(PLAYER_NEUTRAL_PASSIVE)
+
+public rect ENTIRE_MAP = bj_mapInitialPlayableArea
+
+public vec2 array START_POSITION = [
+    FENCE_CENTER + vec2(16, -784),
+    FENCE_CENTER + vec2(544, -816),
+    FENCE_CENTER + vec2(-672, -208),
+    FENCE_CENTER + vec2(-496, -800),
+    FENCE_CENTER + vec2(-688, 224),
+    FENCE_CENTER + vec2(656, -256),
+    FENCE_CENTER + vec2(672, 176),
+    FENCE_CENTER + vec2(400, 816),
+    FENCE_CENTER + vec2(-288, -816),
+    FENCE_CENTER + vec2(-704, -672),
+    FENCE_CENTER + vec2(-704, -528),
+    FENCE_CENTER + vec2(800, -592)
+]
+
+public string SPACE = "                        "
+public string SPACE_GOLD = SPACE + "|cffffcc00"
+
+public real TEXT_DURATION = 7.0
+
+public class STUnitIds
+    static constant SHEEP = 'U001'
+    static constant SHEPHERD = 'E007'
+    static constant WOLF = 'E001'
+    static constant SPIRIT = 'e006'
+    static constant SAVING_FARM = 'h005'
+    static constant D = 'nC13'
+    static constant WARD = 'oeye'
+    static constant HERO_SELECTOR = 'n003'
+    static constant HERO_SELECTOR_NAME = "custom_n003"
+
+public class STAbilityIds
+    static constant X = 'A00G'
+    static constant DEMOLTIION = 'A00P'
+    static constant TORCH = 'A03J'
+    static constant JUGGERNAUT = 'A00R'
+    static constant IMPALE = 'A00O'
+    static constant IMPALE_BUFF = 'B00H'
+    static constant REINFORCE = 'A03L'
+    static constant BRAMBLES = 'A00S'
+    static constant FRENZY = 'A03K'
+    static constant LUNGE = 'A00Y'
+    static constant MIRROR_IMAGE = 'A000'
+    static constant SUMMON_GOLEM = 'A03G'
+    static constant GRANITE_GOLEM = 'A03H'
+    static constant IMAGE_WAND = 'A02W'
+    static constant CLEAVE = 'A032'
+
+    static constant BASE_BUFF_ID = 'Bply'
+    static constant DEMOLITION_BUFF = "B00G"
+    static constant TORCH_BUFF = "B00N"
+    static constant IMPALE_BUFF_STUN = "B00F"
+    static constant FRENZY_BUFF = "B00O"
+    static constant JUGGERNAUT_BUFF = "BHav"

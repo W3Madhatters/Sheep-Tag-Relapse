@@ -1,0 +1,166 @@
+package Round
+import Leader
+import Teams
+import STPlayer
+import ClosureTimers
+import Constants
+import Utils
+import TeamWeight
+import ClosureForGroups
+import PeriodicHandler
+import Modes
+import FarmHandler
+import TimerWindow
+import initlater DeathHandler
+import initlater Game
+
+enum State
+    MODES
+    STARTED
+    COUNTDOWN
+    SHEPHERDS_SPAWNED
+    FINISHED    
+
+public class Round
+    use TimerWindow
+
+    boolean updateStats = true
+
+    PeriodicHandler periodic
+    Multiboard gameBoard
+    DeathHandler deathHandler
+    FarmHandler farmHandler
+
+    State state = State.MODES
+
+    construct()
+        periodic = new PeriodicHandler()
+        gameBoard = new SurviveBoard()
+        deathHandler = new SurviveDeathHandler()
+        farmHandler = new FarmHandler()
+        clean()
+
+    ondestroy
+        destroy periodic
+        destroy gameBoard
+        destroy deathHandler
+        destroy farmHandler
+        clean()
+
+    function clean()
+        EnumItemsInRect(ENTIRE_MAP, null, () -> GetEnumItem().remove())
+        Teams.sheepPlayers.addAll(Teams.spiritPlayers)
+        Teams.spiritPlayers.clear()
+        allPlayers.forEach() stp -> 
+            forUnitsOfPlayer(stp.p, u -> u.remove())
+            stp.kills = 0
+            stp.deaths = 0
+            stp.saves = 0
+            stp.farmCount = 0
+            stp.setIncome(0)
+            stp.p.setGold(0)
+            stp.p.setLumber(0)
+            stp.p.panCameraToTimed(FENCE_CENTER, 1.0)
+
+    function isCancelable() returns boolean
+        return this.state != State.SHEPHERDS_SPAWNED
+
+    function getStartTime() returns real
+        return TeamWeight.spawnTime
+
+    function refreshLeader()
+        gameBoard.fillMultiboard()
+
+    function onStart()
+        state = State.COUNTDOWN
+        Game.refreshLeader()
+        ClearTextMessages()
+        clean()
+        TeamWeight.setTeamWeight()
+        Teams.setAlliances()
+        Teams.sheepPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000Sheep|r|cffffcc00 this round.")
+        Teams.shepherdPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000Shepherd|r|cffffcc00 this round.")
+        Teams.afkPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000sitting out|r|cffffcc00 this round.")
+        
+        periodic.start()
+        
+        printTimed(SPACE + "|Cffffcc00Game starting in 3...|r", TEXT_DURATION)
+        startTimer(1) ->
+            printTimed(SPACE + "|Cffffcc00Game starting in 2...|r", TEXT_DURATION)
+            FogEnable(not Modes.view)
+            Teams.sheepPlayers.forEach(stp -> stp.p.panCameraTo(stp.getStartPosition()))
+            Teams.shepherdPlayers.forEach(stp -> stp.p.panCameraTo(FENCE_CENTER))
+            startTimer(1) ->
+                printTimed(SPACE + "|Cffffcc00Game starting in 1...|r", TEXT_DURATION)
+                startTimer(1) ->
+                    onCountdownExpire()
+
+    function onCountdownExpire()
+        ClearTextMessages()
+        state = State.STARTED
+        Game.refreshLeader()
+        Teams.sheepPlayers.forEach() stp -> 
+            stp.p.setGold(Modes.sheepGold)
+            stp.createSheep()
+        Teams.shepherdPlayers.forEach() stp ->
+            stp.p.setGold(Modes.shepherdGold)
+            stp.createSTUnit(FENCE_CENTER, STUnitIds.HERO_SELECTOR)
+        let spawnIn = getStartTime()
+        startTimerWithWindow(spawnIn, "Shepherds Released") ->
+            onShepherdRelease()
+
+    function onShepherdRelease()
+        state = State.SHEPHERDS_SPAWNED
+        Game.refreshLeader()
+        forUnitsOfType(STUnitIds.HERO_SELECTOR_NAME, (unit u) -> u.remove())
+        Teams.shepherdPlayers.forEach() stp -> 
+            if (not stp.shepherd.isAlive())
+                stp.createShepherd()
+            else
+                stp.shepherd.show()
+                stp.shepherd.setPos(FENCE_CENTER)
+                stp.selectAndPan(stp.shepherd)
+            stp.shepherd.addXp(10000, false)
+            stp.shepherd.setMana(25)
+        if (updateStats)
+            for stp1 in Teams.sheepPlayers
+                for stp2 in Teams.sheepPlayers
+                    playerCount.saveInt(stp1.index, stp2.index, 1 + playerCount.loadInt(stp1.index, stp2.index))
+                stp1.sheepCount += 1
+                stp1.sheepPlayed += 1
+        startTimerWithWindow(Modes.time * 60, "Time Remaining", -> onTimerExpire())
+
+    function endCondition()
+        let time = t.getElapsed()
+        if (Teams.sheepPlayers.size() == 0)
+            ClearTextMessages()
+            printTimed(SPACE_GOLD + "The Sheep team survived for |r" + time.toTimeString(false), TEXT_DURATION)
+            onEnd(time)
+        if (Teams.shepherdPlayers.size() == 0)
+            ClearTextMessages()
+            printTimed(SPACE_GOLD + "All Shepherds have left the game", TEXT_DURATION)
+            onEnd(time)
+
+    function onTimerExpire()
+        ClearTextMessages()
+        printTimed(SPACE_GOLD + "The Sheep team survived the entire round!", TEXT_DURATION)
+        onEnd(Modes.time * 60.0)
+
+    function onEnd(real timeElapsed)
+        clean()
+        for stp in allPlayers
+            if (stp.status == AfkStatus.AFK)
+                if updateStats
+                    stp.status = AfkStatus.AFK_INCREMENT
+                Teams.sheepPlayers.remove(stp)
+                Teams.shepherdPlayers.remove(stp)
+                Teams.spiritPlayers.remove(stp)
+                Teams.afkPlayers.add(stp)
+        if updateStats
+            for stp in Teams.sheepPlayers
+                stp.timeAsSheep += timeElapsed
+                if (stp.deaths == 0)
+                    stp.timeAsSheepFirst += timeElapsed
+            Game.updateLeader(timeElapsed)
+        state = State.FINISHED
+        Game.endRound()

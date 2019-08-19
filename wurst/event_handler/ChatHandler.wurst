@@ -1,0 +1,213 @@
+package ChatHandler
+import LinkedList
+import StringUtils
+import ClosureEvents
+import Game
+import Round
+import Constants
+import TeamSelector
+import Teams
+import STPlayer
+import Host
+import Utils
+import Items
+import Modes
+
+function player.displayStats(string header, MapClosure<STPlayer, string> statGetter)
+    printTimedToPlayerClear(header, TEXT_DURATION, this)
+    for stp in allPlayers
+        if (stp.isActive())
+            printTimedToPlayer(stp.p.getNameColored() + ": " + statGetter.run(stp), TEXT_DURATION, this)
+        else
+            printTimedToPlayer(color(40, 40, 40).toColorString() + stp.p.getName() + "|r: " + statGetter.run(stp), TEXT_DURATION, this)
+    destroy statGetter
+
+function giveGold(STPlayer stp1, STPlayer stp2, int gold)
+    stp1.p.addGold(-1 * gold)
+    stp2.p.addGold(gold)
+    printTimedToPlayer(SPACE_GOLD + "Gave |r" + gold.toString() + " |cffffcc00gold to |r" + stp2.p.getNameColored(), TEXT_DURATION, stp1.p)
+    printTimedToPlayer(SPACE_GOLD + "Received |r" + gold.toString() + " |cffffcc00gold from |r" + stp1.p.getNameColored(), TEXT_DURATION, stp1.p)
+
+function giveAllGold(STPlayer stp, LinkedList<STPlayer> team)
+    let tmp = team.copy()..remove(stp)
+    var gold = stp.p.getGold()
+    var numLeft = tmp.size()
+    for p in tmp
+        let g = gold div numLeft
+        giveGold(stp, p, g)
+        gold -= g
+        numLeft -= 1
+    destroy tmp
+
+function goldCommand(STPlayer stp, string arg, LinkedList<STPlayer> team)
+    if (arg.toLowerCase() == "all")
+        giveAllGold(stp, team)
+    else
+        let p = arg.toInt() - 1
+        if p.isPlayerInGame() and stp.p.isAllyOf(players[p])
+            giveGold(stp, p.toSTP(), stp.p.getGold())
+
+function toggleAfk(STPlayer stp)
+    if (stp.status == AfkStatus.ACTIVE)
+        stp.status = AfkStatus.AFK
+        printTimed(SPACE + stp.p.getNameColored() + "|Cffffcc00 has gone afk", TEXT_DURATION)
+        if (Game.currentRound.state == State.MODES)
+            Teams.sheepPlayers.remove(stp)
+            Teams.shepherdPlayers.remove(stp)
+            Teams.spiritPlayers.remove(stp)
+            Teams.afkPlayers.add(stp)
+        else
+            stp.controlAll = false
+            allPlayers.forEach(stp2 -> setControl(stp, stp2, stp.controlAll))
+    else
+        printTimed(SPACE + stp.p.getNameColored() + "|Cffffcc00 has returned to the game", TEXT_DURATION)
+        if (stp == Host.lastHost)
+            Host.host = stp
+            printTimed(SPACE + stp.p.getNameColored() + "|cffffcc00 is host|r", TEXT_DURATION)
+        if (stp.status == AfkStatus.AFK_INCREMENT)
+            var maxSC = 0
+            for p in allPlayers
+                maxSC = max(p.sheepCount, maxSC)
+            stp.sheepCount = maxSC
+        if (Game.currentRound.state != State.MODES)
+            stp.controlAll = false
+            allPlayers.forEach(stp2 -> setControl(stp, stp2, stp.controlAll))
+        stp.status = AfkStatus.ACTIVE
+    print(stp.p.getNameColored() + " active: " + stp.isActive().toString())
+    Game.refreshLeader()
+
+function setControl(STPlayer stp1, STPlayer stp2, boolean control)
+    if stp1.p.isAllyOf(stp2.p)
+        if control
+            SetPlayerAllianceStateBJ(stp1.p, stp2.p, bj_ALLIANCE_ALLIED_ADVUNITS)
+            Game.refreshLeader()
+        else 
+            SetPlayerAllianceStateBJ(stp1.p, stp2.p, bj_ALLIANCE_ALLIED_VISION)
+
+function controlCommand(STPlayer stp, string arg)
+    if (arg.toLowerCase() == "all")
+        stp.controlAll = not stp.controlAll
+        allPlayers.forEach(stp2 -> setControl(stp, stp2, stp.controlAll))
+    else
+        let p = arg.toInt() -1
+        if p.isPlayerInGame()
+            let stp2 = p.toSTP()
+            let control = not GetPlayerAlliance(stp.p, stp2.p, ALLIANCE_SHARED_ADVANCED_CONTROL)
+            setControl(stp, stp2, control)
+
+
+
+init
+    EventListener.add(EVENT_PLAYER_CHAT_FILTER) ->
+        let stp = GetTriggerPlayer().toSTP()
+        let text = GetEventPlayerChatString()
+        if (text.charAt(0) == "-")
+            let args = text.reduce().split(" ")
+            let command = args.dequeue().toLowerCase()
+            if (stp == Host.host and Game.currentRound.state == State.MODES)
+                switch command
+                    case "-gold"
+                        if (args.size() >= 2)
+                            Modes.sheepGold = min(args.dequeue().toInt().abs(), 1000000)
+                            Modes.shepherdGold = min(args.dequeue().toInt().abs(), 1000000)
+                            printTimed(SPACE_GOLD + "Set Sheep starting gold to |r" + Modes.sheepGold.toString(), TEXT_DURATION)
+                            printTimed(SPACE_GOLD + "Set Shepherd starting gold to |r" + Modes.shepherdGold.toString(), TEXT_DURATION)
+                        else
+                            Modes.sheepGold = min(args.dequeue().toInt(), 1000000)
+                            Modes.shepherdGold = Modes.sheepGold
+                            printTimed(SPACE_GOLD + "Set starting gold to |r" + Modes.sheepGold.toString(), TEXT_DURATION)
+                    case "-time"
+                        Modes.time = min(args.dequeue().toReal().abs(), 100.0)
+                        printTimed(SPACE_GOLD + "Set round length to |r" + Modes.time.toString(2) + " minutes", TEXT_DURATION)
+                    case "-vtime"
+                        Modes.vTime = min(args.dequeue().toReal().abs(), 100.0)
+                        printTimed(SPACE_GOLD + "Set versus second round minimum length to |r" + Modes.vTime.toString(2) + " minutes", TEXT_DURATION)
+                    case "-view"
+                        Modes.view = not Modes.view
+                        printTimed(SPACE_GOLD + "Set map visibility to |r" + ((Modes.view) ? "on" : "off"), TEXT_DURATION)
+                    case "-start"
+                        Game.startRound(new TeamSelector(args.dequeue().toInt()))
+                    case "-reverse"
+                        Game.startRound(new Reverse(args.dequeue().toInt()))
+                    case "-random"
+                        Game.startRound(new Random(args.dequeue().toInt()))
+                    case "-smart"
+                        Game.startRound(new Smart(args.dequeue().toInt()))
+                    case "-switch"
+                        Modes.style = Style.SWITCH
+                        printTimed(SPACE_GOLD + "Set mode to|r switch", TEXT_DURATION)
+                    case "-survive"
+                        Modes.style = Style.SURVIVE
+                        printTimed(SPACE_GOLD + "Set mode to|r survive", TEXT_DURATION)
+                    case "-vamp"
+                        Modes.style = Style.VAMPIRE
+                        printTimed(SPACE_GOLD + "Set mode to|r vamp", TEXT_DURATION)
+
+            if (stp == Host.host)
+                switch command
+                    case "-fafk"
+                        let p = args.dequeue().toInt() - 1
+                        if (p.isPlayerInGame())
+                            toggleAfk(p.toSTP())
+
+            if (stp == Host.host and Game.currentRound.isCancelable())
+                switch command
+                    case "-cancel"
+                        Game.cancelRound()
+                    case "-restart"
+                        Game.restartRound()
+
+            if (Teams.shepherdPlayers.has(stp))
+                switch command
+                    case "-g"
+                        goldCommand(stp, args.dequeue(), Teams.shepherdPlayers)
+                    case "-buy"
+                        stp.purchaseItem(args.dequeue())
+            else if (Teams.sheepPlayers.has(stp))
+                switch command
+                    case "-g"
+                        goldCommand(stp, args.dequeue(), Teams.sheepPlayers)
+            
+            switch command
+                case "-zoom"
+                    stp.setZoom(max(min(args.dequeue().toReal(), 2500), 1000))
+                    printTimedToPlayer(SPACE_GOLD + "Set camera zoom to " + stp.zoom.toInt().toString() + "|r |cffffcc00(default 1650)|r", TEXT_DURATION, stp.p)
+                case "-afk"
+                    toggleAfk(stp)
+                case "-c"
+                    controlCommand(stp, args.dequeue())
+                case "leader"
+                    printTimedToPlayer("|cffffcc00Leader: |r" + Game.longestRoundString, TEXT_DURATION, stp.p)
+                    printTimedToPlayer("|cffffcc00Loser: |r" + Game.shortestRoundString, TEXT_DURATION, stp.p)
+                case "-sc"
+                    stp.p.displayStats("|cffffcc00Sheep Count|r", p -> p.sheepCount.toString())
+                case "-sp"
+                    stp.p.displayStats("|cffffcc00Sheep Played|r", p -> p.sheepPlayed.toString())
+                case "-td"
+                    stp.p.displayStats("|cffffcc00Total Deaths|r", p -> p.totalDeaths.toString())
+                case "-tk"
+                    stp.p.displayStats("|cffffcc00Total Kills|r", p -> p.totalKills.toString())
+                case "-ts"
+                    stp.p.displayStats("|cffffcc00Total Saves|r", p -> p.saves.toString())
+                case "-times"
+                    stp.p.displayStats("|cffffcc00Total Round Time as Sheep|r", p -> p.timeAsSheep.toTimeString(false))
+                case "-stimes"
+                    stp.p.displayStats("|cffffcc00Total Time Alive as Sheep|r", p -> p.timeAsSheepLiving.toTimeString(false))
+                case "-ftimes"
+                    stp.p.displayStats("|cffffcc00Total Time Before First Death as Sheep|r", p -> p.timeAsSheepFirst.toTimeString(false))
+                case "-avgtimes"
+                    stp.p.displayStats("|cffffcc00Average Round Time as Sheep (-times / -sp)|r", p -> (p.timeAsSheep / max(p.sheepPlayed, 1)).toTimeString(false))
+                case "-avgstimes"
+                    stp.p.displayStats("|cffffcc00Average Time Alive as Sheep (-stimes / -sp)|r", p -> (p.timeAsSheepLiving / max(p.sheepPlayed, 1)).toTimeString(false))
+                case "-avgftimes"
+                    stp.p.displayStats("|cffffcc00Average Time Before First Death as Sheep (-ftimes / -sp)|r", p -> (p.timeAsSheepFirst / max(p.sheepPlayed, 1)).toTimeString(false))
+
+            
+            let num = command.substring(1).toInt() - 1
+            if num.isPlayerInGame() and stp.p.isAllyOf(players[num])
+                let g = args.dequeue().toInt()
+                if g.isBetween(0, stp.p.getGold())
+                    giveGold(stp, num.toSTP(), stp.p.getGold())
+                        
+
+                        

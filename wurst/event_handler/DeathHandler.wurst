@@ -1,0 +1,85 @@
+package DeathHandler
+import ClosureEvents
+import Constants
+import Utils
+import STPlayer
+import TeamWeight
+import Teams
+import initlater Game
+
+public abstract class DeathHandler
+
+    EventListener deathListener
+
+    construct()
+        deathListener = EventListener.add(EVENT_PLAYER_UNIT_DEATH) ->
+            let u = GetTriggerUnit()
+            if u.isSheep()
+                onSheepDeath(u, GetKillingUnit())
+            else if u.isSpirit()
+                onSpiritDeath(u, GetKillingUnit())
+
+    ondestroy
+        destroy deathListener
+
+    function onSheepDeath(unit sheep, unit killer)
+        let dyingSTP = sheep.getOwner().toSTP()
+        let killerSTP = killer.getOwner().toSTP()
+
+        sheep.revive(sheep.getPos(), false)
+        sheep.hide()
+
+        printTimed(SPACE + dyingSTP.p.getNameColored() + "|cffffcc00 has been slain by |r" + killerSTP.p.getNameColored(), TEXT_DURATION)
+
+        if Game.currentRound.updateStats
+            dyingSTP.deaths += 1
+            dyingSTP.totalDeaths += 1
+            killerSTP.kills += 1
+            killerSTP.totalKills += 1
+            if dyingSTP.deaths == 1
+                dyingSTP.timeAsSheepFirst += Game.t.getElapsed()
+
+        Game.currentRound.refreshLeader()
+
+    abstract function onSpiritDeath(unit spirit, unit killer)
+    
+    function awardBounty(STPlayer dyingSTP)
+        Teams.shepherdPlayers.forEach() stp ->
+            stp.awardBounty((TeamWeight.goldPerSheepDeath * dyingSTP.handicap).toInt())
+            stp.shepherd.addXp(TeamWeight.xpPerSheepDeath, true)
+
+    function destroyFarms(STPlayer dyingSTP)
+        dyingSTP.destroyFarms((dyingSTP.deaths > 0) ? 1 : TeamWeight.calculatePercentOfFarmsToDestroy())
+
+    function revive(vec2 pos, STPlayer stp)
+        Teams.sheepPlayers.add(stp)
+        Teams.spiritPlayers.remove(stp)
+        Game.currentRound.refreshLeader()
+        stp.sheep.show()
+        stp.sheep.setPos(pos)
+        stp.p.select(stp.sheep)
+        stp.p.panCameraToTimed(pos, .5)
+
+public class SurviveDeathHandler extends DeathHandler
+
+    override function onSheepDeath(unit sheep, unit killer)
+        let dyingSTP = sheep.getOwner().toSTP()
+
+        Teams.sheepPlayers.remove(dyingSTP)
+        Teams.spiritPlayers.add(dyingSTP)
+
+        destroyFarms(dyingSTP)
+        awardBounty(dyingSTP)
+
+        let spirit = dyingSTP.createSTUnit(sheep.getPos(), STUnitIds.SPIRIT)
+        let revTime = TeamWeight.calculateReviveTime(dyingSTP.deaths)
+        spirit.setTimedLife(revTime)
+        dyingSTP.reviveTimer = CreateTimer()
+        dyingSTP.reviveTimer.start(revTime, () -> GetExpiredTimer().destr())
+        
+        super.onSheepDeath(sheep, killer)
+
+    override function onSpiritDeath(unit spirit, unit killer)
+        printTimed(SPACE + spirit.getOwner().getNameColored() + "|cffffcc00 has been revived|r", TEXT_DURATION)
+        let stp = spirit.getOwner().toSTP()
+        revive(spirit.getPos(), stp)

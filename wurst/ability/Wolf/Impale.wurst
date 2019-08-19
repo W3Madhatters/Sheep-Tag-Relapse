@@ -1,0 +1,46 @@
+package Impale
+import Constants
+import DummyCaster
+import AbilityObjEditing
+import ObjectIdGenerator
+import Orders
+import Utils
+
+constant IMPALE_STUN = compiletime(ABIL_ID_GEN.next())
+constant IMPALE_DAMAGE = compiletime(ABIL_ID_GEN.next())
+
+public function impaleTarget(unit wolf, unit farm)
+    wolf.removeAbility(STAbilityIds.IMPALE_BUFF)
+    let pos = wolf.getPos()
+    let targetPos =farm.getPos()
+    let level = GetUnitAbilityLevel(wolf, STAbilityIds.IMPALE)
+    let dummy = new DummyCaster()..origin(pos)..owner(wolf.getOwner())..delay(.5)
+    dummy.castPoint(IMPALE_STUN, level, Orders.impale, targetPos)
+    dummy.castPoint(IMPALE_DAMAGE, level, Orders.carrionswarm, targetPos)
+                
+@compiletime function impale()
+    new AbilityDefinitionCryptLordImpale(IMPALE_STUN)..setDummyAbilityLevels()
+    ..presetDurationHero((int lvl) -> .5 + .5 * lvl)
+    ..presetDurationNormal((int lvl) -> .5 + .5 * lvl)
+    ..presetAirTimeseconds((int lvl) -> 0.0)
+    ..presetDamageDealt((int lvl) -> 0)
+    ..presetWaveDistance((int lvl) -> 225.0 + 192.0 * lvl)
+    ..presetAreaofEffect((int lvl) -> 150)
+    ..presetBuffs((int lvl) -> STAbilityIds.IMPALE_BUFF_STUN)
+    ..presetTargetsAllowed((int lvl) -> "air,enemies")
+
+    new AbilityDefinitionDreadlordCarrionSwarm(IMPALE_DAMAGE)..setDummyAbilityLevels()
+    ..presetDamage((int lvl) -> 20.0 + 20.0 * lvl)
+    ..presetMaxDamage((int lvl) -> 99999)
+    ..presetDistance((int lvl) -> 225.0 + 192.0 * lvl)
+    ..presetAreaofEffect((int lvl) -> 50)
+    ..presetFinalArea((int lvl) -> 50)
+    ..presetTargetsAllowed((int lvl) -> "ground,enemies,structure")
+    ..setMissileArt("")
+    ..setArtTarget("")
+        
+    
+        
+        
+
+            

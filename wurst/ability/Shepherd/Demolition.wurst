@@ -1,0 +1,50 @@
+package Demolition
+import ClosureEvents
+import ClosureTimers
+import ClosureForGroups
+import Constants
+import DummyCaster
+import Utils
+import AbilityObjEditing
+import ObjectIdGenerator
+import Orders
+import Abilities
+
+constant DEMOLTIION_SLOW = compiletime(ABIL_ID_GEN.next())
+
+init
+    EventListener.onCast(STAbilityIds.DEMOLTIION) (caster) ->
+        let u = GetSpellTargetUnit()
+        let pos = u.getPos()
+        let collision = u.getCollisionSize()
+        let level = GetUnitAbilityLevel(caster, GetSpellAbilityId())
+        let delay = GetSpellAbility().getField(ABILITY_RLF_DURATION_NORMAL, level)
+        println("inside demo " + delay.toString(0))
+        flashEffect(Abilities.markOfChaosTarget, pos)
+        doAfter(delay) () ->
+            if (u.isAlive())
+                caster.damageTarget(u, 1000)
+            flashEffect("Objects\\Spawnmodels\\Human\\HCancelDeath\\HCancelDeath.mdl", pos, collision / 200.0)
+            flashEffect(Abilities.thunderclapCaster, pos, collision / 72.0, 0.0.fromDeg())
+            let dummy = new DummyCaster()..origin(pos)..owner(caster.getOwner())..delay(.1)
+            forUnitsInRange(pos, collision + 90) (unit target) ->
+                if (target.isSheep())
+                    dummy.castTarget(DEMOLTIION_SLOW, level, Orders.slow, target)
+
+                    
+    doPeriodically(1) (CallbackPeriodic cb) ->
+        forUnitsSelected(players[0]) (unit u) ->
+            print(u.getMoveSpeed())
+            
+                
+@compiletime function demolitionSlow()
+    new AbilityDefinitionSlow(DEMOLTIION_SLOW)..setDummyAbilityLevels()
+    ..presetDurationHero((int lvl) -> (2 + lvl).toReal())
+    ..presetMovementSpeedFactor((int lvl) -> .1 * (1 + lvl))
+    ..presetBuffs((int lvl) -> STAbilityIds.DEMOLITION_BUFF)
+        
+    
+        
+        
+
+            

@@ -1,0 +1,26 @@
+package Host
+import STPlayer
+import ClosureTimers
+import Constants
+import initlater Game
+
+public class Host
+    static STPlayer host
+    static STPlayer lastHost
+
+    static function setHost()
+        
+        if (host == null or not host.isActive())
+            lastHost = host
+            let iter = allPlayers.iterator()
+            while (iter.hasNext() and (host == null or not host.isActive()))
+                host = iter.next()
+            if (host != null)
+                print(SPACE + host.p.getNameColored() + " |cffffcc00is host|r")
+                Game.refreshLeader()
+            iter.close()
+
+init
+    doPeriodically(2.0, cb -> Host.setHost())
+            
+

@@ -1,0 +1,39 @@
+package Torch
+import ClosureEvents
+import ClosureTimers
+import ClosureForGroups
+import Constants
+import DummyCaster
+import Utils
+import AbilityObjEditing
+import ObjectIdGenerator
+import Orders
+import Abilities
+
+constant TORCH_BURNING = compiletime(ABIL_ID_GEN.next())
+
+// init
+//     EventListener.onCast(STAbilityIds.TORCH) (unit caster) ->
+//         let pos = getSpellTargetPos()
+//         let level = GetUnitAbilityLevel(caster, GetSpellAbilityId())
+//         let initialDamage = 200.0 + 100.0 * level
+//         let g = 
+//         forUnitsInRange(pos, 316) (unit u) ->
+//             if (u.isAlive())
+//                 caster.damageTarget(u, 1000)
+            
+        
+
+// @compiletime function torchBurning()
+//     new AbilityDefinitionUnholyFrenzy(TORCH_BURNING)..setDummyAbility()
+//     ..presetDurationNormal((int lvl) -> 25)
+//     ..presetDamageperSecond((int lvl) -> (3 + lvl).toReal())
+//     ..presetAttackSpeedBonus((int lvl) -> 0)
+//     ..setBuffs(1, STAbilityIds.TORCH_BUFF)
+//     ..setBuffs(2, STAbilityIds.TORCH_BUFF)
+        
+    
+        
+        
+
+            

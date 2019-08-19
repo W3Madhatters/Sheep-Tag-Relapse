@@ -1,0 +1,15 @@
+package Sheep
+import ClosureEvents
+import STPlayer
+import Constants
+
+init
+
+    EventListener.onCast(STAbilityIds.X) (caster) ->
+        let stp = caster.getOwner().toSTP()
+        while (not stp.farms.isEmpty())
+            let last = stp.farms.pop()
+            if (last.isAlive())
+                last.remove()
+                stp.farmCount -= 1
+                break

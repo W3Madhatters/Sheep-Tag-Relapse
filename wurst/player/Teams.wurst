@@ -1,0 +1,76 @@
+package Teams
+import STPlayer
+import LinkedList
+import Constants
+import ClosureEvents
+import ClosureTimers
+import initlater TeamWeight
+
+public function LinkedList<STPlayer>.displayText(string text)
+    if this.has(localPlayer.toSTP())
+        printTimed(text, TEXT_DURATION)
+
+public function LinkedList<STPlayer>.setAlliance(STPlayer stp, int bj_ALLIANCE)
+    for stp1 in this
+        SetPlayerAllianceStateBJ(stp.p, stp1.p, bj_ALLIANCE)
+        SetPlayerAllianceStateBJ(stp1.p, stp.p, bj_ALLIANCE)
+
+public function LinkedList<STPlayer>.setAlliance(int bj_ALLIANCE)
+    for stp in this
+        for stp1 in this
+            SetPlayerAllianceStateBJ(stp.p, stp1.p, bj_ALLIANCE)
+
+public function LinkedList<STPlayer>.setAlliance(LinkedList<STPlayer> team, int bj_ALLIANCE_TO, int bj_ALLIANCE_AT)
+    for stp in this
+        for stp1 in team
+            SetPlayerAllianceStateBJ(stp.p, stp1.p, bj_ALLIANCE_AT)
+            SetPlayerAllianceStateBJ(stp1.p, stp.p, bj_ALLIANCE_TO)
+
+public class Teams
+
+    static LinkedList<STPlayer> sheepPlayers = new LinkedList<STPlayer>()
+    static LinkedList<STPlayer> spiritPlayers = new LinkedList<STPlayer>()
+    static LinkedList<STPlayer> shepherdPlayers = new LinkedList<STPlayer>()
+    static LinkedList<STPlayer> afkPlayers = new LinkedList<STPlayer>()
+
+    static function setAlliances()
+        // Ally within teams
+        sheepPlayers.setAlliance(bj_ALLIANCE_ALLIED_VISION)
+        shepherdPlayers.setAlliance(bj_ALLIANCE_ALLIED_VISION)
+        afkPlayers.setAlliance(bj_ALLIANCE_ALLIED_VISION)
+
+        // Sheep/Shepherd enemy
+        sheepPlayers.setAlliance(shepherdPlayers, bj_ALLIANCE_UNALLIED, bj_ALLIANCE_UNALLIED)
+
+        // Sheep/Shepherd treat afk as enemy with vision, get treated as enemy
+        sheepPlayers.setAlliance(afkPlayers, bj_ALLIANCE_UNALLIED_VISION, bj_ALLIANCE_UNALLIED)
+        shepherdPlayers.setAlliance(afkPlayers, bj_ALLIANCE_UNALLIED_VISION, bj_ALLIANCE_UNALLIED)
+
+
+init
+    let numSheep = allPlayers.size() / 2
+    for stp in allPlayers
+        if (Teams.sheepPlayers.size() < numSheep)
+            Teams.sheepPlayers.add(stp)
+        else
+            Teams.shepherdPlayers.add(stp)
+
+    EventListener.add(EVENT_PLAYER_LEAVE) ->
+        let stp = GetTriggerPlayer().toSTP()
+        stp.reviveTimer..pause()..destr()
+        printTimed(SPACE + stp.p.getNameColored() + " has left the game", TEXT_DURATION)
+        stp.destroyFarms(1)
+        Teams.sheepPlayers.remove(stp)
+        Teams.spiritPlayers.remove(stp)
+        Teams.shepherdPlayers.remove(stp)
+        Teams.afkPlayers.remove(stp)
+        TeamWeight.setTeamWeight()
+
+    
+    doPeriodically(5.0) cb ->
+        allPlayers.forEach(stp -> SetPlayerAllianceStateBJ(stp.p, stPlayers[0].p, bj_ALLIANCE_ALLIED_ADVUNITS))
+
+
+
+
+

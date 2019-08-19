@@ -1,0 +1,157 @@
+package Leader
+import STPlayer
+import Teams
+import LinkedList
+import ClosureTimers
+import StringUtils
+import Utils
+
+public Multiboard statBoard
+
+public class Multiboard
+    string title = "Sheep Tag |cff008800Relapse|r"
+    boolean addSpirits = false
+    boolean addShepherds = true
+    boolean addAFK = true
+    boolean update = false
+    int currentRow = 0
+    
+    static constant string INDENT = "   "
+
+    multiboard board = CreateMultiboard()
+    CallbackPeriodic callback
+
+    construct(string title, boolean addSpirits, boolean addShepherds, boolean addAFK, boolean update)
+        this.title = title
+        this.addSpirits = addSpirits
+        this.addShepherds = addShepherds
+        this.addAFK = addAFK
+        this.update = update
+        board.setTitle(title)
+        fillMultiboard()
+        if (update)
+            callback = doPeriodically(1.0, cb -> updateMultiboard())
+
+    ondestroy
+        destroy callback
+        board.display(false)
+        board.destr()
+
+    function getRowCount() returns int
+        return Teams.sheepPlayers.size() + Teams.spiritPlayers.size() + Teams.shepherdPlayers.size() + 3
+
+    function getColSize() returns LinkedList<real>
+        return asList(.10, .04)
+
+    function getSheepValue(STPlayer stp) returns string
+        return (stp == null) ? ",Farms" : stp.farmCount.toString()
+
+    function getShepherdValue(STPlayer stp) returns string
+        return (stp == null) ? ",Kills" : stp.kills.toString()
+
+    function getSpiritValue(STPlayer stp) returns string
+        return (stp == null) ? ",Rebirth" : stp.reviveTimer.getRemaining().toInt().toString()
+
+    function getAFKValue(STPlayer stp) returns string
+        return stp.sheepCount.toString()
+
+    function setRowValues(int row, int startingColumn, string values)
+        var col = startingColumn
+        let valueList = values.split(",")
+        for v in valueList
+            board.getItem(row, col).setValue(v)
+            // printTimed("Set (" + currentRow.toString() + "," + c.toString() + ") to " + v, 5.0)
+            col += 1
+        destroy valueList
+
+    function setCurrentRow(string values)
+        setRowValues(currentRow, 0, values)
+        currentRow += 1
+
+    function addSheep()
+        setCurrentRow(Teams.sheepPlayers.size().toString() + " Sheep" + getSheepValue(null))
+        for stp from Teams.sheepPlayers.staticItr()
+            stp.boardRow = currentRow
+            setCurrentRow(INDENT + stp.p.getNameColored() + "," + getSheepValue(stp))
+
+    function addSpirits()
+        setCurrentRow(Teams.spiritPlayers.size().toString() + " Spirits" + getSpiritValue(null))
+        for stp from Teams.spiritPlayers.staticItr()
+            stp.boardRow = currentRow
+            setCurrentRow(INDENT + stp.p.getNameColored() + "," + getSpiritValue(stp))
+
+    function addShepherds()
+        setCurrentRow(Teams.shepherdPlayers.size().toString() + " Shepherds" + getShepherdValue(null))
+        for stp from Teams.shepherdPlayers.staticItr()
+            stp.boardRow = currentRow
+            setCurrentRow(INDENT + stp.p.getNameColored() + "," + getShepherdValue(stp))
+
+    function addAFK()
+        setCurrentRow(Teams.afkPlayers.size().toString() + " AFK")
+        for stp from Teams.afkPlayers.staticItr()
+            stp.boardRow = currentRow
+            setCurrentRow(INDENT + stp.p.getNameColored() + "," + getAFKValue(stp))
+
+    function fillMultiboard()
+        // MultiboardSuppressDisplay(true)
+        // MultiboardSuppressDisplay(false)
+        currentRow = 0
+        board.display(false)
+
+        let cols = getColSize()
+        board.setRowCount(getRowCount())
+        board.setColumnCount(cols.size())
+        board.setItemsStyle(true, false)
+        board.setItemsValue("")
+        for i = 0 to board.getRowCount() - 1
+            for j = 0 to cols.size() - 1
+                board.getItem(i, j).setWidth(cols.get(j))
+        destroy cols
+
+        addSheep()
+        if addSpirits
+            addSpirits()
+        if addShepherds
+            addShepherds()
+        if addAFK
+            addAFK()
+
+        board.display(true)
+
+    function updateMultiboard()
+        for stp from Teams.sheepPlayers.staticItr()
+            setRowValues(stp.boardRow, 1, getSheepValue(stp))
+        if addSpirits
+            for stp from Teams.spiritPlayers.staticItr()
+                setRowValues(stp.boardRow, 1, getSpiritValue(stp))
+        if addShepherds
+            for stp from Teams.shepherdPlayers.staticItr()
+                setRowValues(stp.boardRow, 1, getShepherdValue(stp))
+            
+
+public class InitBoard extends Multiboard
+    construct()
+        super("Sheep Tag |cff008800Relapse|r", false, true, true, false)
+
+    override function getColSize() returns LinkedList<real>
+        return asList(.10, .04, .04, .06)
+
+    override function getRowCount() returns int
+        return Teams.sheepPlayers.size() + Teams.shepherdPlayers.size() + Teams.afkPlayers.size() + 3
+
+    function getValues(STPlayer stp) returns string
+        return stp.sheepCount.toString() + "," + stp.handicap.toString(2) + "," + (stp.timeAsSheep / max(stp.sheepPlayed, 1)).toTimeString(false)
+   
+    override function getSheepValue(STPlayer stp) returns string
+        return (stp == null) ? ",SC,HC,AvgTime" : getValues(stp)
+    override function getShepherdValue(STPlayer stp) returns string
+        return (stp == null) ? "" : getValues(stp)
+    override function getAFKValue(STPlayer stp) returns string
+        return (stp == null) ? "" : getValues(stp)
+
+            
+public class SurviveBoard extends Multiboard
+    construct()
+        super("Sheep Tag |cff008800Survive|r", true, true, false, true)
+ 
+    

@@ -1,0 +1,32 @@
+package OnUnitEnter
+import ClosureForGroups
+import Constants
+import Utils
+import Orders
+import Abilities
+import Reinforce
+import MapBounds
+import STPlayer
+import Frenzy
+import ClosureTimers
+
+function onUnitEnter()
+    let u = GetFilterUnit()
+    if (not u.isWard())
+        let isIllusion = u.isIllusion()
+        let isSummoned = IsUnitIdType(u.getTypeId(), UNIT_TYPE_SUMMONED)
+        if (isIllusion and u.getOwner().toSTP().shepherd.hasAbility(STAbilityIds.REINFORCE))
+            flashEffect(Abilities.aIilTarget, u, "origin")
+            forUnitsOfPlayer(u.getOwner()) other ->
+                if (other.isIllusion() and other != u)
+                    other.kill()
+            nullTimer(() -> u.setPos(ReinforceImage.lastDestination))
+        if (isSummoned)
+            forNearestUnit(u.getPos(), 500, Filter(() -> GetFilterUnit().isSheep())) (unit sheep) ->
+                u.issueTargetOrderById(Orders.attack, sheep)
+        if ((isIllusion or isSummoned) and u.getOwner().toSTP().shepherd.hasAbility(STAbilityIds.FRENZY))
+            castFrenzy(u, u.getOwner().toSTP().shepherd.getAbilityLevel(STAbilityIds.FRENZY))
+            
+
+init   
+    CreateTrigger()..registerEnterRegion(boundRegion, Filter(() -> onUnitEnter()))

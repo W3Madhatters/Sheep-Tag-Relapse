@@ -1,0 +1,29 @@
+package TimerWindow
+import TimerUtils
+import ClosureTimers
+
+public module TimerWindow
+    
+    static timer t
+    static CallbackSingle timerCallback
+    static timerdialog timerWindow
+    
+    static function startTimerWithWindow(real timeToWait, string title, CallbackSingle cb)
+        if (timerWindow != null)
+            timerWindow.destr()
+        t = getTimer()
+        timerCallback = t.doAfter(timeToWait, cb)
+        timerWindow = t.createTimerDialog()..setTitle(title)
+        timerWindow.display(true)
+
+    static function startTimer(real timeToWait, CallbackSingle cb)
+        timerCallback = doAfter(timeToWait, cb)
+
+    static function cancelTimer()
+        if (timerCallback != null)
+            destroy timerCallback
+        if (timerWindow != null)
+            timerWindow.destr()
+
+    static function getElapsedTime() returns real
+        return t.getElapsed()

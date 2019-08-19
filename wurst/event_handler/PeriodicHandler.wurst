@@ -1,0 +1,47 @@
+package PeriodicHandler
+import ClosureTimers
+import Teams
+import TeamWeight
+import initlater Game
+import initlater Round
+
+public class PeriodicHandler
+    protected int count = 0
+    protected CallbackPeriodic callback
+    protected real goldStorageSheep = 0
+    protected real goldStorageShepherd = 0
+
+    construct()
+
+    function tick()
+        count += 1
+
+        Game.currentRound.endCondition()
+
+        goldStorageSheep += TeamWeight.goldPerSecondSheep
+        for stp in Teams.sheepPlayers
+            stp.p.addGold(goldStorageSheep.toInt())
+        goldStorageSheep -= goldStorageSheep.toInt()
+
+        goldStorageShepherd += TeamWeight.goldPerSecondShepherd
+        for stp in Teams.shepherdPlayers
+            stp.p.addGold(goldStorageShepherd.toInt())
+        goldStorageShepherd -= goldStorageShepherd.toInt()
+
+        for stp in Teams.sheepPlayers
+            stp.p.setLumber(stp.farmCount)
+
+        if Game.currentRound.updateStats and Game.currentRound.state == State.SHEPHERDS_SPAWNED
+            for stp in Teams.sheepPlayers
+                stp.timeAsSheepLiving += 1
+
+        if (count mod 4 == 0)
+            for stp in Teams.sheepPlayers
+                stp.p.addGold(stp.income)
+
+    function start()
+        callback = doPeriodically(1.0, cb -> tick())
+
+    ondestroy
+        if (callback != null)
+            destroy callback

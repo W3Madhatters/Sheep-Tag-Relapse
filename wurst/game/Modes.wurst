@@ -1,0 +1,22 @@
+package Modes
+import TeamSelector
+
+enum Style
+    SURVIVE
+    SWITCH
+    VAMPIRE
+    PRACTICE
+
+public class Modes
+
+    static int sheepGold = 0
+    static int shepherdGold = 0
+    static boolean view = false
+    static real time = 10.0
+    static real vTime = 10.0
+    static Style style = Style.SURVIVE
+    static TeamSelector teamSelector = new TeamSelector()
+
+    static function setTeamSelector(TeamSelector teamSelector)
+        destroy Modes.teamSelector
+        Modes.teamSelector = teamSelector

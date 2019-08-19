@@ -1,0 +1,84 @@
+package Reinforce
+import ClosureEvents
+import ClosureTimers
+import Constants
+import DummyCaster
+import Orders
+import Abilities
+import LinkedList
+import AbilityObjEditing
+import ObjectIdGenerator
+import AbilityIds
+import Utils
+
+constant REINFORCE_ILLUSION = compiletime(ABIL_ID_GEN.next())
+
+class ReinforceImage
+
+    static protected constant BREAK_DISTANCE_SQ = 50 * 50
+
+    static protected LinkedList<ReinforceImage> images = new LinkedList<ReinforceImage>()
+    static protected CallbackPeriodic callback
+
+    static vec2 lastDestination
+
+    static function addImage(ReinforceImage i)
+        images.add(i)
+        if (images.size() == 1)
+            callback = doPeriodically(.03) (CallbackPeriodic cb) ->
+                for img in images
+                    img.missile.setPos(img.missile.getPos().polarOffset(img.angle, img.speed))
+                    if (img.missile.getPos().distanceToSq(img.targetPos) <= BREAK_DISTANCE_SQ)
+                        destroy img
+
+    effect missile
+    real speed
+    angle angle
+    vec2 targetPos
+    unit caster
+    int level
+
+    construct(unit u, vec2 targetPos, real speed, int level)
+        this.caster = u
+        this.targetPos = targetPos
+        this.speed = speed
+        this.level = level
+        let pos = u.getPos()
+        this.angle = pos.angleTo(targetPos)
+        missile = addEffect(Abilities.mirrorImageMissile, pos.polarOffset(angle, 50))
+        missile.setYaw(angle)
+        addImage(this)
+
+    ondestroy
+        missile.playAnimation(ANIM_TYPE_DEATH)
+        missile.setScale(0)
+        missile.destr()
+        images.remove(this)
+        if (images.size() == 0)
+            destroy callback
+        if (caster.isAlive())
+            lastDestination = targetPos
+            new DummyCaster()..delay(.1)..owner(caster.getOwner()).castTarget(REINFORCE_ILLUSION, level, Orders.wandOfIllusion, caster)
+
+
+init
+    EventListener.onCast(STAbilityIds.REINFORCE) (caster) ->
+        let pos = EventData.getAbilityTargetPos()
+        let level = GetUnitAbilityLevel(caster, EventData.getSpellAbilityId())
+        let speed = (400.0 + 150.0 * level) * .03
+        new ReinforceImage(caster, pos, speed, level)
+        
+             
+        
+@compiletime function illusion()
+    new AbilityDefinition(REINFORCE_ILLUSION, AbilityIds.itemIllusions)..setDummyAbilityLevels()
+    ..setRequiredLevel(6)
+    ..presetDurationHero((int lvl) -> (40 + 10 * lvl).toReal())
+    ..presetTargetsAllowed((int lvl) -> "friend,enemy,ground,vulnerable,invulnerable")
+
+        
+    
+        
+        
+
+            

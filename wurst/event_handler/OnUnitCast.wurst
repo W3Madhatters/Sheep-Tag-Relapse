@@ -1,0 +1,15 @@
+package OnUnitCast
+import Constants
+import Frenzy
+
+function onCast()
+    let abil = GetSpellAbilityId()
+    let caster = GetTriggerUnit()
+    print("Caster: " + caster.getName() + " " + GetAbilityName(abil) + " " + caster.getAbilityLevel(abil).toString() + " " + caster.getAbilityManaCost(abil, caster.getAbilityLevel(abil)).toString())
+    if (caster.hasAbility(STAbilityIds.FRENZY) and 
+        caster.getAbilityManaCost(abil, 1) > 0)
+        castFrenzy(caster, caster.getAbilityLevel(STAbilityIds.FRENZY))
+
+init   
+    CreateTrigger()..registerAnyUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT)..addAction(() -> onCast())
+        

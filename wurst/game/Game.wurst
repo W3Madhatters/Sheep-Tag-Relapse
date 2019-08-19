@@ -1,0 +1,113 @@
+package Game
+import Round
+import ClosureTimers
+import Leader
+import LinkedList
+import STPlayer
+import Teams
+import Constants
+import Utils
+import Host
+import TeamSelector
+import Modes
+import TimerWindow
+
+public class Game
+    use TimerWindow
+
+    static Round currentRound
+    static Round previousRound
+    static Multiboard statBoard
+
+    static real longestRoundTime = 0.0
+    static string longestRoundString = ""
+    static real shortestRoundTime = 9999999.0
+    static string shortestRoundString = ""
+
+    static function startRound(TeamSelector teamSelector)
+        if (previousRound != null)
+            destroy previousRound
+        cancelTimer()
+        Modes.setTeamSelector(teamSelector)
+        teamSelector.setTeams()
+        currentRound.onStart()
+
+    static function startNewRound()
+        currentRound = new Round()
+        refreshLeader()
+        startTimerWithWindow(10, "Mode Selection") ->
+            timerWindow.destr()
+            currentRound.onStart()
+            if (previousRound != null)
+                destroy previousRound
+
+    static function endRound()
+        previousRound = currentRound
+        Round.cancelTimer()
+        startNewRound()
+    
+    static function cancelRound()
+        currentRound.clean()
+        endRound()
+
+    static function restartRound()
+        currentRound.onStart()
+        
+    static function refreshLeader()
+        Game.currentRound.refreshLeader()
+        switch Game.currentRound.state
+            case MODES
+                statBoard.fillMultiboard()
+                currentRound.gameBoard.board.display(false)
+                statBoard.board.display(true)
+            case FINISHED
+                statBoard.fillMultiboard()
+                currentRound.gameBoard.board.display(false)
+                statBoard.board.display(true)
+            case COUNTDOWN
+                currentRound.refreshLeader()
+                statBoard.board.display(false)
+                currentRound.gameBoard.board.display(true)
+                currentRound.gameBoard.board.minimalize(false)
+            case STARTED
+                currentRound.refreshLeader()
+                statBoard.board.display(false)
+                currentRound.gameBoard.board.display(true)
+                if (Teams.shepherdPlayers.has(localPlayer.toSTP()))
+                    currentRound.gameBoard.board.minimalize(false)
+                else
+                    currentRound.gameBoard.board.minimalize(not localPlayer.toSTP().visibleLeaderBoard)
+            case SHEPHERDS_SPAWNED
+                currentRound.refreshLeader()
+                statBoard.board.display(false)
+                currentRound.gameBoard.board.display(true)
+                currentRound.gameBoard.board.minimalize(not localPlayer.toSTP().visibleLeaderBoard)
+
+    static function updateLeader(real elapsedTime)
+        if (elapsedTime > longestRoundTime)
+            if longestRoundString != ""
+                printTimed(SPACE_GOLD + "A new leader has emerged!", TEXT_DURATION)
+            longestRoundTime = elapsedTime
+            longestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
+        if (elapsedTime < shortestRoundTime)
+            if shortestRoundString != ""
+                printTimed(SPACE_GOLD + "A new loser has emerged!", TEXT_DURATION)
+            shortestRoundTime = elapsedTime
+            shortestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
+   
+
+init
+    let t = CreateTrigger()
+    for stp in allPlayers
+        t.registerPlayerAllianceChange(stp.p, ALLIANCE_SHARED_CONTROL)
+    t.addAction() ->
+        let p1 = GetTriggerPlayer()
+        for stp in allPlayers
+            if (GetPlayerAlliance(p1, stp.p, ALLIANCE_SHARED_CONTROL))
+                SetPlayerAllianceStateBJ(p1, stp.p, bj_ALLIANCE_ALLIED_ADVUNITS)
+                Game.refreshLeader()
+
+    doAfter(.1) ->
+        Game.statBoard = new InitBoard()
+        Game.startNewRound()
+        Host.setHost()

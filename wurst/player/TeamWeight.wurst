@@ -1,0 +1,43 @@
+package TeamWeight
+import Teams
+import STPlayer
+
+function STPlayer.calculateReviveTime() returns real
+    return TeamWeight.reviveTime * (this.handicap + .5) / 1.5
+
+public class TeamWeight
+    static real teamWeight
+    static real goldPerSecondSheep
+    static real goldPerSecondShepherd
+    static real goldPerSheepDeath
+    static int xpPerSheepDeath
+    static int xpPerSecond
+    static real spawnTime
+    static real reviveTime
+
+    static function setTeamWeight()
+        let numSheep = Teams.sheepPlayers.size() + Teams.spiritPlayers.size()
+        let numShepherds = Teams.shepherdPlayers.size()
+
+        let sheepHC = Teams.sheepPlayers.foldl(0.0, (stp, curr) -> curr + stp.handicap)
+        let spiritHC = Teams.spiritPlayers.foldl(0.0, (stp, curr) -> curr + stp.handicap)
+        let shepherdHC = Teams.shepherdPlayers.foldl(0.0, (stp, curr) -> curr + stp.handicap)
+
+        let hc = 1 + (sheepHC + spiritHC) / numSheep - shepherdHC / numShepherds
+
+        teamWeight = max(.96428 + .06732*(numSheep + numShepherds) - 1.16497 * numSheep / numShepherds, .3)
+        teamWeight = max(teamWeight * hc, .1)
+
+        goldPerSecondSheep = max(teamWeight, .4)
+        goldPerSecondShepherd = 1.85 - .75 * teamWeight - .15 * numShepherds
+        goldPerSheepDeath = min((100 / teamWeight) / numShepherds, 300 / numShepherds)
+        xpPerSheepDeath = (1000 / teamWeight).toInt()
+        xpPerSecond = (1000 / teamWeight / 60).toInt()
+        spawnTime = 12 + (teamWeight - numSheep * .05) * 13
+        reviveTime = 15.0 / teamWeight + numSheep * 3 - 13
+
+    static function calculateReviveTime(int numPreviousDeaths) returns real
+        return reviveTime + (13 + reviveTime) * numPreviousDeaths
+
+    static function calculatePercentOfFarmsToDestroy() returns real
+        return 1 - teamWeight * 1.25 * (2 + Teams.spiritPlayers.size()) / (2 + Teams.spiritPlayers.size() + Teams.sheepPlayers.size())

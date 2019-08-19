@@ -1,0 +1,57 @@
+package FarmHandler
+import ClosureEvents
+import STPlayer
+import Constants
+import Abilities
+import Utils
+
+public class FarmHandler
+
+    EventListener farmDeathListener
+    EventListener farmConstructStartListener
+    EventListener farmConstructFinishListener
+    EventListener farmDestroyListener
+
+    construct()
+        farmConstructStartListener = EventListener.add(EVENT_PLAYER_UNIT_CONSTRUCT_START) ->
+            onFarmConstructStart(GetTriggerUnit())
+        
+        farmConstructFinishListener = EventListener.add(EVENT_PLAYER_UNIT_CONSTRUCT_FINISH) ->
+            onFarmConstructFinish(GetTriggerUnit())
+
+        farmDeathListener = EventListener.add(EVENT_PLAYER_UNIT_DEATH) ->
+            let farm = GetDyingUnit()
+            if (farm.isStructure())
+                onFarmDeath(farm, GetKillingUnit().getOwner().toSTP())
+
+        farmDestroyListener = EventListener.add(EVENT_PLAYER_UNIT_TRAIN_START) ->
+            if (GetTrainedUnitType() == STUnitIds.D)
+                onFarmDestroy(GetTriggerUnit())
+
+    ondestroy
+        destroy farmDeathListener
+        destroy farmConstructStartListener
+        destroy farmConstructFinishListener
+        destroy farmDestroyListener
+
+    function onFarmConstructStart(unit farm)
+        let stp = farm.getOwner().toSTP()
+        stp.farms.push(farm)
+        stp.farmCount += 1
+    
+    function onFarmConstructFinish(unit farm)
+        if (farm.getTypeId() == STUnitIds.SAVING_FARM)
+            farm.getOwner().toSTP().addIncome(1)
+            flashEffect(Abilities.holyBoltSpecialArt, farm.getPos())
+            farm.remove()
+
+    function onFarmDeath(unit farm, STPlayer killer)
+        farm.getOwner().toSTP().farmCount -= 1
+        if (killer.p.isEnemyOf(farm.getOwner()))
+            killer.awardBounty(farm.getPointValue())
+        TriggerSleepAction(2)
+        farm.remove()
+    
+    function onFarmDestroy(unit farm)
+        farm.getOwner().toSTP().farmCount -= 1
+        farm.remove()

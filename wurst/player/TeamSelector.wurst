@@ -1,0 +1,155 @@
+package TeamSelector
+import Teams
+import LinkedList
+import STPlayer
+import Utils
+
+
+constant Comparator<STPlayer> sheepCountComparator = (p1, p2) -> p1.sheepCount - p2.sheepCount
+
+public function LinkedList<STPlayer>.moveRandomPlayer(LinkedList<STPlayer> toList)
+    let p = this.removeAt(GetRandomInt(0, this.size() - 1))
+    toList.add(p)
+
+public function LinkedList<STPlayer>.writeTo(force f)
+    f.clear()
+    this.forEach(stp -> f.addPlayer(stp.p))
+
+public class TeamSelector
+    protected LinkedList<STPlayer> activePlayers = new LinkedList<STPlayer>()
+
+    protected int numSheepIn = 0
+
+    construct()
+
+    construct(int numSheep)
+        this.numSheepIn = numSheep
+
+    protected function setActivePlayers()
+        activePlayers.clear()
+        for stp in allPlayers
+            if stp.isActive()
+                activePlayers.add(stp)
+        activePlayers.shuffle()
+
+    protected function prepare(int numSheep, boolean clearGroups) returns int
+        Teams.spiritPlayers.clear()
+        Teams.afkPlayers.clear()
+        if (clearGroups)
+            Teams.sheepPlayers.clear()
+            Teams.shepherdPlayers.clear()
+        setActivePlayers()
+        if (numSheep < 1 or numSheep > activePlayers.size())
+            return activePlayers.size() div 2
+        return numSheep
+
+    function setTeams()
+        let numSheep = prepare(numSheepIn, false)
+        var currSheep = Teams.sheepPlayers.size()
+        if (currSheep < numSheep)
+            while (currSheep < numSheep)
+                Teams.shepherdPlayers.moveRandomPlayer(Teams.sheepPlayers)
+                currSheep++
+        else
+            while (currSheep > numSheep)
+                Teams.sheepPlayers.moveRandomPlayer(Teams.shepherdPlayers)
+                currSheep--
+
+public class Reverse extends TeamSelector
+    construct(int numSheep)
+        super(numSheep)
+
+    override function setTeams()
+        let tempPlayers = Teams.shepherdPlayers
+        Teams.shepherdPlayers = Teams.sheepPlayers
+        Teams.sheepPlayers = tempPlayers
+        super.setTeams()
+
+public class Random extends TeamSelector
+    construct(int numSheep)
+        super(numSheep)
+
+    override function setTeams()
+        let numSheep = prepare(numSheepIn, true)
+        for i = 1 to numSheep
+            Teams.sheepPlayers.add(activePlayers.pop())
+        Teams.shepherdPlayers.addAll(activePlayers)
+
+public class Pick extends TeamSelector
+    LinkedList<int> sheep
+    construct(LinkedList<int> sheep)
+        this.sheep = sheep
+
+    override function setTeams()
+        prepare(sheep.size(), true)
+        for s in sheep
+            if (s.isPlayerInGame() and activePlayers.has(s.toSTP()))
+                let stp = s.toSTP()
+                activePlayers.remove(stp)
+                Teams.sheepPlayers.add(stp)
+            else
+                Teams.sheepPlayers.add(activePlayers.pop())
+        Teams.shepherdPlayers.addAll(activePlayers)
+
+public class Smart extends TeamSelector
+    construct(int numSheep)
+        super(numSheep)
+
+    override function setTeams()
+        print("preparing " + numSheepIn.toString())
+        let numSheep = prepare(numSheepIn, true)
+        let pSheep = new LinkedList<STPlayer>()
+        activePlayers.sortWith(sheepCountComparator)
+        print("active")
+        activePlayers.forEach(stp -> print(stp.p.getNameColored()))
+        var lastSC = 0
+        for stp in activePlayers
+            if (pSheep.size() < numSheep or stp.sheepCount == lastSC)
+                pSheep.add(stp)
+                activePlayers.remove(stp)
+                lastSC = stp.sheepCount
+                print("adding " + stp.p.getNameColored() + " to possible sheep")
+            else
+                break
+
+        let currentSheep = pSheep.filter(stp -> stp.sheepCount < lastSC)
+        let possibleSheep = pSheep.filter(stp -> stp.sheepCount == lastSC)
+        
+        print("current")
+        currentSheep.forEach(stp -> print(stp.p.getNameColored()))
+        print("possible")
+        possibleSheep.forEach(stp -> print(stp.p.getNameColored()))
+
+        destroy pSheep
+
+        if (currentSheep.size() != numSheep)
+            if (currentSheep.size() == 0)
+                var minPairPC = 99999
+                STPlayer minPairSTP = null
+                for stp1 in possibleSheep
+                    for stp2 in possibleSheep
+                        let pc = playerCount.loadInt(stp1.index, stp2.index)
+                        if (stp1 != stp2 and pc < minPairPC)
+                            minPairSTP = stp1
+                            minPairPC = pc
+                currentSheep.add(minPairSTP)
+                possibleSheep.remove(minPairSTP)
+            while (currentSheep.size() < numSheep)
+                var minPC = 99999
+                STPlayer minSTP = null
+                for stp from possibleSheep.staticItr()
+                    let totalPC = currentSheep.foldl(0, (stp2, curr) -> curr + playerCount.loadInt(stp.index, stp2.index))
+                    if (totalPC < minPC)
+                        minPC = totalPC
+                        minSTP = stp
+                currentSheep.add(minSTP)
+                possibleSheep.remove(minSTP)
+        
+        Teams.sheepPlayers.addAll(currentSheep)
+        Teams.shepherdPlayers..addAll(possibleSheep).addAll(activePlayers)
+        print("sheepPlayers")
+        Teams.sheepPlayers.forEach(stp -> print(stp.p.getNameColored()))
+        print("shepherdPlayers")
+        Teams.shepherdPlayers.forEach(stp -> print(stp.p.getNameColored()))
+        destroy possibleSheep
+        destroy currentSheep

@@ -1,0 +1,36 @@
+package Cleave
+import ClosureForGroups
+import Abilities
+import Utils
+
+public function cleaveFarms(unit shepherd, unit farm, real damage)
+    let pos1 = shepherd.getPos()
+    let pos2 = farm.getPos()
+    let angle = (360 + pos2.angleTo(pos1).degrees()) % 360
+    var sqAngle = 0.0.fromDeg()
+    if (angle.isBetween(55, 125))
+        sqAngle = 270.0.fromDeg()
+    else if (angle.isBetween(145, 215))
+        sqAngle = 0.0.fromDeg()
+    else if (angle.isBetween(235, 305))
+        sqAngle = 90.0.fromDeg()
+    else if (angle > 325 or angle < 35)
+        sqAngle = 180.0.fromDeg()
+    else if (angle.isBetween(35, 55))
+        sqAngle = 225.0.fromDeg()
+    else if (angle.isBetween(125, 145))
+        sqAngle = 315.0.fromDeg()
+    else if (angle.isBetween(215, 235))
+        sqAngle = 45.0.fromDeg()
+    else if (angle.isBetween(305, 325))
+        sqAngle = 135.0.fromDeg()
+    let g = CreateGroup()
+    for i = 0 to 2
+        forUnitsInRange(pos2.polarOffset(sqAngle, 100.0 * i), 40, true) (unit u) ->
+            if u.isStructure() and u.isAlive()
+                g.addUnit(u)
+    g.removeUnit(farm)
+    g.forEachIn() (unit u) ->
+        shepherd.damageTarget(u, damage)
+        flashEffect(Abilities.devourEffectArt, u, "overhead")
+    g.destr()
