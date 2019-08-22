@@ -62,3 +62,6 @@ public class STAbilityIds
     static constant IMPALE_BUFF_STUN = "B00F"
     static constant FRENZY_BUFF = "B00O"
     static constant JUGGERNAUT_BUFF = "BHav"
+
+public class STItemIds
+    static constant RING = 'I00V'

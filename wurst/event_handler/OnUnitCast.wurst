@@ -5,10 +5,16 @@ import Frenzy
 function onCast()
     let abil = GetSpellAbilityId()
     let caster = GetTriggerUnit()
-    print("Caster: " + caster.getName() + " " + GetAbilityName(abil) + " " + caster.getAbilityLevel(abil).toString() + " " + caster.getAbilityManaCost(abil, caster.getAbilityLevel(abil)).toString())
-    if (caster.hasAbility(STAbilityIds.FRENZY) and 
-        caster.getAbilityManaCost(abil, 1) > 0)
-        castFrenzy(caster, caster.getAbilityLevel(STAbilityIds.FRENZY))
+    if (caster.hasAbility(abil))
+        let level = caster.getAbilityLevel(abil)
+        print("Caster: " + caster.getName() + " " + GetAbilityName(abil) + " " + caster.getAbilityLevel(abil).toString() + " " + caster.getAbilityManaCost(abil, caster.getAbilityLevel(abil)).toString())
+        if (caster.hasAbility(STAbilityIds.FRENZY) and 
+            caster.getAbilityManaCost(abil, 1) > 0)
+            castFrenzy(caster, caster.getAbilityLevel(STAbilityIds.FRENZY))
+        if (caster.getAbilityCooldown(abil, level) > 0)
+            let numRings = caster.itemCount(STItemIds.RING).toReal()
+            if (numRings > 0)
+                caster.setAbilityCooldown(abil, level, BlzGetAbilityCooldown(abil, level) * Pow(.8, numRings))
 
 init   
     CreateTrigger()..registerAnyUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT)..addAction(() -> onCast())
