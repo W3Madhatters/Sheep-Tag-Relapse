@@ -26,6 +26,7 @@ public class PeriodicHandler
         goldStorageShepherd += TeamWeight.goldPerSecondShepherd
         for stp in Teams.shepherdPlayers
             stp.p.addGold(goldStorageShepherd.toInt())
+            stp.awardXp(TeamWeight.xpPerSecond)
         goldStorageShepherd -= goldStorageShepherd.toInt()
 
         for stp in Teams.sheepPlayers

@@ -112,6 +112,12 @@ public class STPlayer
         p.addGold(amount)
         createTTEx(sheep.getPos3Real(), vec2(0, 32), "+" + amount.toString(), 12, 1.5, colorA(238, 238, 0, 255), p)
 
+    function awardXp(int amount)
+        if (shepherd.isAlive())
+            shepherd.addXp(amount, true)
+        if (sheep.isAlive())
+            sheep.addXp(amount, true)
+
     function setZoom(real zoom)
         this.zoom = zoom
         setCamera()

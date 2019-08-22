@@ -46,7 +46,7 @@ public abstract class DeathHandler
     function awardBounty(STPlayer dyingSTP)
         Teams.shepherdPlayers.forEach() stp ->
             stp.awardBounty((TeamWeight.goldPerSheepDeath * dyingSTP.handicap).toInt())
-            stp.shepherd.addXp(TeamWeight.xpPerSheepDeath, true)
+            stp.awardXp(TeamWeight.xpPerSheepDeath)
 
     function destroyFarms(STPlayer dyingSTP)
         dyingSTP.destroyFarms((dyingSTP.deaths > 0) ? 1 : TeamWeight.calculatePercentOfFarmsToDestroy())
