@@ -45,7 +45,7 @@ class ReinforceImage
         this.level = level
         let pos = u.getPos()
         this.angle = pos.angleTo(targetPos)
-        missile = addEffect(Abilities.mirrorImageMissile, pos.polarOffset(angle, 50))
+        missile = addEffect(Abilities.mirrorImageMissile, pos.polarOffset(angle, 25))
         missile.setYaw(angle)
         addImage(this)
 

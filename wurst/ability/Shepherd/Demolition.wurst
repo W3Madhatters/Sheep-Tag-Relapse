@@ -18,10 +18,8 @@ init
         let pos = u.getPos()
         let collision = u.getCollisionSize()
         let level = GetUnitAbilityLevel(caster, GetSpellAbilityId())
-        let delay = GetSpellAbility().getField(ABILITY_RLF_DURATION_NORMAL, level)
-        println("inside demo " + delay.toString(0))
-        flashEffect(Abilities.markOfChaosTarget, pos)
-        doAfter(delay) () ->
+        addEffect(Abilities.markOfChaosTarget, pos)..setScale(collision / 72.0)..setTimeScale(.7).destr()
+        doAfter(.9) () ->
             if (u.isAlive())
                 caster.damageTarget(u, 1000)
             flashEffect("Objects\\Spawnmodels\\Human\\HCancelDeath\\HCancelDeath.mdl", pos, collision / 200.0)
