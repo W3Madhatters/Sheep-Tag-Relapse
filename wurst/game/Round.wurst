@@ -48,6 +48,7 @@ public class Round
         clean()
 
     function clean()
+        cancelTimer()
         EnumItemsInRect(ENTIRE_MAP, null, () -> GetEnumItem().remove())
         Teams.sheepPlayers.addAll(Teams.spiritPlayers)
         Teams.spiritPlayers.clear()

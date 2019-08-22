@@ -16,7 +16,6 @@ public class Game
     use TimerWindow
 
     static Round currentRound
-    static Round previousRound
     static Multiboard statBoard
 
     static real longestRoundTime = 0.0
@@ -25,8 +24,6 @@ public class Game
     static string shortestRoundString = ""
 
     static function startRound(TeamSelector teamSelector)
-        if (previousRound != null)
-            destroy previousRound
         cancelTimer()
         Modes.setTeamSelector(teamSelector)
         teamSelector.setTeams()
@@ -36,21 +33,19 @@ public class Game
         currentRound = new Round()
         refreshLeader()
         startTimerWithWindow(10, "Mode Selection") ->
-            timerWindow.destr()
             currentRound.onStart()
-            if (previousRound != null)
-                destroy previousRound
 
     static function endRound()
-        previousRound = currentRound
-        Round.cancelTimer()
+        destroy currentRound
         startNewRound()
     
     static function cancelRound()
+        cancelTimer()
         currentRound.clean()
         endRound()
 
     static function restartRound()
+        cancelTimer()
         currentRound.onStart()
         
     static function refreshLeader()
@@ -107,7 +102,9 @@ init
                 SetPlayerAllianceStateBJ(p1, stp.p, bj_ALLIANCE_ALLIED_ADVUNITS)
                 Game.refreshLeader()
 
+    FogEnable(false)
     doAfter(.1) ->
+        FogEnable(true)
         Game.statBoard = new InitBoard()
         Game.startNewRound()
         Host.setHost()

@@ -9,10 +9,12 @@ public module TimerWindow
     static timerdialog timerWindow
     
     static function startTimerWithWindow(real timeToWait, string title, CallbackSingle cb)
-        if (timerWindow != null)
-            timerWindow.destr()
         t = getTimer()
-        timerCallback = t.doAfter(timeToWait, cb)
+        timerCallback = t.doAfter(timeToWait) () ->
+            timerWindow.destr()
+            timerWindow = null
+            timerCallback = null
+            cb.call()
         timerWindow = t.createTimerDialog()..setTitle(title)
         timerWindow.display(true)
 
@@ -22,8 +24,10 @@ public module TimerWindow
     static function cancelTimer()
         if (timerCallback != null)
             destroy timerCallback
+            timerCallback = null
         if (timerWindow != null)
             timerWindow.destr()
+            timerWindow = null
 
     static function getElapsedTime() returns real
         return t.getElapsed()
