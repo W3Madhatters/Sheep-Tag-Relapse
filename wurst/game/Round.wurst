@@ -53,7 +53,9 @@ public class Round
         Teams.sheepPlayers.addAll(Teams.spiritPlayers)
         Teams.spiritPlayers.clear()
         allPlayers.forEach() stp -> 
-            forUnitsOfPlayer(stp.p, u -> u.remove())
+            forUnitsOfPlayer(stp.p) u -> 
+                if (not u.isDummy())
+                    u.remove()
             stp.kills = 0
             stp.deaths = 0
             stp.saves = 0
@@ -150,13 +152,17 @@ public class Round
     function onEnd(real timeElapsed)
         clean()
         for stp in allPlayers
-            if (stp.status == AfkStatus.AFK)
+            if (stp.status == AfkStatus.AFK_BENCHED or stp.status == AfkStatus.AFK_IN_GAME)
                 if updateStats
-                    stp.status = AfkStatus.AFK_INCREMENT
+                    stp.status = AfkStatus.AFK_BENCHED_INCREMENT
+                else
+                    stp.status = AfkStatus.AFK_BENCHED
                 Teams.sheepPlayers.remove(stp)
                 Teams.shepherdPlayers.remove(stp)
                 Teams.spiritPlayers.remove(stp)
                 Teams.afkPlayers.add(stp)
+            if (stp.status == AfkStatus.ACTIVE_BENCHED and updateStats)
+                stp.setSCToMax()
         if updateStats
             for stp in Teams.sheepPlayers
                 stp.timeAsSheep += timeElapsed

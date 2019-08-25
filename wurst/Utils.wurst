@@ -1,6 +1,7 @@
 package Utils
 import Constants
 import AbilityObjEditing
+import DummyRecycler
 
 public function unit.isStructure() returns boolean
     return this.isType(UNIT_TYPE_STRUCTURE)
@@ -15,7 +16,10 @@ public function unit.isSheperd() returns boolean
     return this.getTypeId() == STUnitIds.SHEPHERD
 
 public function unit.isWard() returns boolean
-    return this.getTypeId() == STUnitIds.WARD
+    return this.getTypeId() == STUnitIds.WARD or this.getTypeId() == STUnitIds.LIGHTNING_WARD
+
+public function unit.isDummy() returns boolean
+    return this.getTypeId() == DUMMY_UNIT_ID
 
 public function unit.isSummoned() returns boolean
     return IsUnitType(GetTriggerUnit(), UNIT_TYPE_SUMMONED)

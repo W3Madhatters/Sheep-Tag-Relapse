@@ -4,6 +4,7 @@ import STPlayer
 import Constants
 import Abilities
 import Utils
+import Orbs
 
 public class FarmHandler
 
@@ -22,7 +23,12 @@ public class FarmHandler
         farmDeathListener = EventListener.add(EVENT_PLAYER_UNIT_DEATH) ->
             let farm = GetDyingUnit()
             if (farm.isStructure())
-                onFarmDeath(farm, GetKillingUnit().getOwner().toSTP())
+                let killer = (GetKillingUnit().isDummy()) ? GetKillingUnit().toSTP().shepherd : GetKillingUnit()
+                if (killer.hasItemById(STItemIds.ORB_OF_FIRE))
+                    applyFireOrbDamage(killer, farm)
+                if (killer.hasItemById(STItemIds.ORB_OF_FROST))
+                    applyFrostOrbSlow(killer, farm)
+                onFarmDeath(farm, killer.getOwner().toSTP())
 
         farmDestroyListener = EventListener.add(EVENT_PLAYER_UNIT_TRAIN_START) ->
             if (GetTrainedUnitType() == STUnitIds.D)

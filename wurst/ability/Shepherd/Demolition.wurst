@@ -28,12 +28,6 @@ init
             forUnitsInRange(pos, collision + 90) (unit target) ->
                 if (target.isSheep())
                     dummy.castTarget(DEMOLTIION_SLOW, level, Orders.slow, target)
-
-                    
-    doPeriodically(1) (CallbackPeriodic cb) ->
-        forUnitsSelected(players[0]) (unit u) ->
-            print(u.getMoveSpeed())
-            
                 
 @compiletime function demolitionSlow()
     new AbilityDefinitionSlow(DEMOLTIION_SLOW)..setDummyAbilityLevels()

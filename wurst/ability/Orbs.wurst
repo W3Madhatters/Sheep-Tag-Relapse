@@ -1,0 +1,45 @@
+package Orbs
+import ClosureForGroups
+import Constants
+import DummyCaster
+import Utils
+import AbilityObjEditing
+import ObjectIdGenerator
+import Orders
+import Abilities
+
+constant ORB_SLOW = compiletime(ABIL_ID_GEN.next())
+
+public function applyFrostOrbSlow(unit shepherd, unit farm)
+    let pos = farm.getPos()
+    let collision = farm.getCollisionSize()
+    forUnitsInRange(pos, collision + 72, true) (unit target) ->
+        if (target.isSheep())
+            let dummy = new DummyCaster()..origin(pos)..owner(shepherd.getOwner())..delay(.1)
+            dummy.castTarget(ORB_SLOW, 1, Orders.slow, target) 
+
+public function applyFireOrbDamage(unit shepherd, unit farm)
+    let pos = farm.getPos()
+    let collision = farm.getCollisionSize()
+    forUnitsInRange(pos, collision + 72, true) (unit target) ->
+        if (target.isAlive())
+            if (target.isSheep())
+                shepherd.damageTarget(target, 3)
+                flashEffect(Abilities.aIfbSpecialArt, target, "overhead")
+            else if (target.isStructure())
+                shepherd.damageTarget(target, 10)
+                flashEffect(Abilities.aIfbSpecialArt, target, "overhead")
+
+                
+@compiletime function demolitionSlow()
+    new AbilityDefinitionSlow(ORB_SLOW)..setDummyAbilityLevels()
+    ..setMovementSpeedFactor(1, .1)
+    ..setAttackSpeedFactor(1, 0)
+    ..setDurationHero(1, 3)
+    ..setBuffs(1, STAbilityIds.ORB_OF_FROST_BUFF)
+        
+    
+        
+        
+
+            

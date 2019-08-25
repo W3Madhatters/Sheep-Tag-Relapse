@@ -9,8 +9,8 @@ enum Style
 
 public class Modes
 
-    static int sheepGold = 0
-    static int shepherdGold = 0
+    static int sheepGold = 10000
+    static int shepherdGold = 10000
     static boolean view = false
     static real time = 10.0
     static real vTime = 10.0

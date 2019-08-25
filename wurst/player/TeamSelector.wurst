@@ -18,7 +18,7 @@ public function LinkedList<STPlayer>.writeTo(force f)
 public class TeamSelector
     protected LinkedList<STPlayer> activePlayers = new LinkedList<STPlayer>()
 
-    protected int numSheepIn = 0
+    protected int numSheepIn = -1
 
     construct()
 
@@ -45,17 +45,21 @@ public class TeamSelector
 
     function setTeams()
         let numSheep = prepare(numSheepIn, false)
-        var currSheep = Teams.sheepPlayers.size()
-        if (currSheep < numSheep)
-            while (currSheep < numSheep)
-                Teams.shepherdPlayers.moveRandomPlayer(Teams.sheepPlayers)
-                currSheep++
-        else
-            while (currSheep > numSheep)
-                Teams.sheepPlayers.moveRandomPlayer(Teams.shepherdPlayers)
-                currSheep--
+        if (numSheepIn != -1)
+            var currSheep = Teams.sheepPlayers.size()
+            if (currSheep < numSheep)
+                while (currSheep < numSheep)
+                    Teams.shepherdPlayers.moveRandomPlayer(Teams.sheepPlayers)
+                    currSheep++
+            else
+                while (currSheep > numSheep)
+                    Teams.sheepPlayers.moveRandomPlayer(Teams.shepherdPlayers)
+                    currSheep--
 
 public class Reverse extends TeamSelector
+
+    construct()
+
     construct(int numSheep)
         super(numSheep)
 

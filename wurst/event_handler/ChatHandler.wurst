@@ -48,31 +48,36 @@ function goldCommand(STPlayer stp, string arg, LinkedList<STPlayer> team)
             giveGold(stp, p.toSTP(), stp.p.getGold())
 
 function toggleAfk(STPlayer stp)
-    if (stp.status == AfkStatus.ACTIVE)
-        stp.status = AfkStatus.AFK
+    if (stp.isActive())
         printTimed(SPACE + stp.p.getNameColored() + "|Cffffcc00 has gone afk", TEXT_DURATION)
-        if (Game.currentRound.state == State.MODES)
+        if (Game.currentRound.state == State.MODES or stp.status == AfkStatus.ACTIVE_BENCHED)
             Teams.sheepPlayers.remove(stp)
             Teams.shepherdPlayers.remove(stp)
             Teams.spiritPlayers.remove(stp)
             Teams.afkPlayers.add(stp)
+            stp.status = AfkStatus.AFK_BENCHED
         else
             stp.controlAll = false
             allPlayers.forEach(stp2 -> setControl(stp, stp2, stp.controlAll))
+            stp.status = AfkStatus.AFK_IN_GAME
     else
         printTimed(SPACE + stp.p.getNameColored() + "|Cffffcc00 has returned to the game", TEXT_DURATION)
         if (stp == Host.lastHost)
             Host.host = stp
             printTimed(SPACE + stp.p.getNameColored() + "|cffffcc00 is host|r", TEXT_DURATION)
-        if (stp.status == AfkStatus.AFK_INCREMENT)
-            var maxSC = 0
-            for p in allPlayers
-                maxSC = max(p.sheepCount, maxSC)
-            stp.sheepCount = maxSC
+        if (stp.status == AfkStatus.AFK_BENCHED_INCREMENT)
+            stp.setSCToMax()
         if (Game.currentRound.state != State.MODES)
-            stp.controlAll = false
-            allPlayers.forEach(stp2 -> setControl(stp, stp2, stp.controlAll))
-        stp.status = AfkStatus.ACTIVE
+            if (stp.status == AfkStatus.AFK_IN_GAME)
+                stp.controlAll = false
+                allPlayers.forEach(stp2 -> setControl(stp, stp2, stp.controlAll))
+                stp.status = AfkStatus.ACTIVE
+            else
+                stp.status = AfkStatus.ACTIVE_BENCHED
+        else
+            stp.status = AfkStatus.ACTIVE
+            Teams.shepherdPlayers.add(stp)
+            Teams.afkPlayers.remove(stp)
     print(stp.p.getNameColored() + " active: " + stp.isActive().toString())
     Game.refreshLeader()
 
@@ -126,9 +131,15 @@ init
                         Modes.view = not Modes.view
                         printTimed(SPACE_GOLD + "Set map visibility to |r" + ((Modes.view) ? "on" : "off"), TEXT_DURATION)
                     case "-start"
-                        Game.startRound(new TeamSelector(args.dequeue().toInt()))
+                        if (args.size() > 0)
+                            Game.startRound(new TeamSelector(args.dequeue().toInt()))
+                        else
+                            Game.startRound(new TeamSelector())
                     case "-reverse"
-                        Game.startRound(new Reverse(args.dequeue().toInt()))
+                        if (args.size() > 0)
+                            Game.startRound(new Reverse(args.dequeue().toInt()))
+                        else
+                            Game.startRound(new Reverse())
                     case "-random"
                         Game.startRound(new Random(args.dequeue().toInt()))
                     case "-smart"

@@ -2,6 +2,7 @@ package Constants
 
 public int MAX_PLAYERS = 12
 
+public rect FENCE_RECT = gg_rct_Fenze_Zone
 public vec2 FENCE_CENTER = gg_rct_Fenze_Zone.getCenter()
 
 public player NEUTRAL_PASSIVE = Player(PLAYER_NEUTRAL_PASSIVE)
@@ -36,6 +37,7 @@ public class STUnitIds
     static constant SAVING_FARM = 'h005'
     static constant D = 'nC13'
     static constant WARD = 'oeye'
+    static constant LIGHTNING_WARD = 'o000'
     static constant HERO_SELECTOR = 'n003'
     static constant HERO_SELECTOR_NAME = "custom_n003"
 
@@ -55,9 +57,11 @@ public class STAbilityIds
     static constant GRANITE_GOLEM = 'A03H'
     static constant IMAGE_WAND = 'A02W'
     static constant CLEAVE = 'A032'
+    static constant REFRESHMENT = 'A039'
 
     static constant BASE_BUFF_ID = 'Bply'
     static constant DEMOLITION_BUFF = "B00G"
+    static constant ORB_OF_FROST_BUFF = "B00I"
     static constant TORCH_BUFF = "B00N"
     static constant IMPALE_BUFF_STUN = "B00F"
     static constant FRENZY_BUFF = "B00O"
@@ -65,3 +69,6 @@ public class STAbilityIds
 
 public class STItemIds
     static constant RING = 'I00V'
+    static constant CROWN = 'I002'
+    static constant ORB_OF_FROST = 'I005'
+    static constant ORB_OF_FIRE = 'I003'

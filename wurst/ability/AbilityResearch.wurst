@@ -13,18 +13,9 @@ init
                 hero.incAbilityLevel(STAbilityIds.MIRROR_IMAGE)
                 let mirror = hero.getAbility(STAbilityIds.MIRROR_IMAGE)
                 mirror.setField(ABILITY_IF_MISSILE_SPEED, 1500)
-                mirror.setField(ABILITY_SLF_ICON_NORMAL, 1, "ReplaceableTextures\\CommandButtons\\BTNRedDragonDevour.blp")
-                mirror.setField(ABILITY_SLF_ICON_NORMAL, 2, "ReplaceableTextures\\CommandButtons\\BTNRedDragonDevour.blp")
-                mirror.setField(ABILITY_SLF_ICON_NORMAL, 3, "ReplaceableTextures\\CommandButtons\\BTNRedDragonDevour.blp")
-                mirror.setField(ABILITY_SF_ICON_ACTIVATED, "ReplaceableTextures\\CommandButtons\\BTNRedDragonDevour.blp")
-                mirror.setField(ABILITY_SLF_ICON_NORMAL, hero.getAbilityLevel(STAbilityIds.MIRROR_IMAGE), "ReplaceableTextures\\CommandButtons\\BTNRedDragonDevour.blp")
-                
             case STAbilityIds.BRAMBLES
                 hero.incAbilityLevel(STAbilityIds.IMPALE)
             case STAbilityIds.GRANITE_GOLEM
-                hero.incAbilityLevel(STAbilityIds.SUMMON_GOLEM)
-                hero.getAbility(STAbilityIds.SUMMON_GOLEM).setField(ABILITY_SF_ICON_ACTIVATED, "ReplaceableTextures\\CommandButtons\\BTNArmorGolem.blp")
-                hero.decAbilityLevel(STAbilityIds.SUMMON_GOLEM)
                 hero.incAbilityLevel(STAbilityIds.SUMMON_GOLEM)
 
 

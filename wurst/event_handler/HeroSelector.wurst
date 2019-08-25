@@ -8,16 +8,16 @@ import Round
 init
     EventListener.add(EVENT_PLAYER_UNIT_SELL) ->
         let u = EventData.getSoldUnit()
-        let stp = u.toSTP()
+        let stp = EventData.getSellingUnit().toSTP()
 
         if stp.shepherd != null
             stp.shepherd.remove()
         stp.shepherd = u
 
-        flashEffect(Abilities.deathPactTarget, u.getPos())
+        flashEffect(Abilities.deathPactTarget, u.getPos(), 1, 0.0.fromDeg())
 
         if Game.currentRound.state == State.SHEPHERDS_SPAWNED
             stp.selectAndPan(u)
         else 
             u.hide()
-            createTTEx(u.getPos3Zero(), vec2(0,0).polarOffset((stp.p.getId() * 30.0).fromDeg(), 60), u.getName(), 10, 3.0, stp.p.getColor().toColor().withAlpha(255))
+            createTTEx(u.getPos3Zero(), vec2(0,0).polarOffset((stp.p.getId() * 30.0).fromDeg(), 60), u.getName(), 10, 3.0, stp.p.getColor().toColor().withAlpha(255)).setVisibility(true)

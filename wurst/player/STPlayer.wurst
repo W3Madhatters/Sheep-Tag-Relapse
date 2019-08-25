@@ -10,8 +10,10 @@ public hashtable playerCount = InitHashtable()
 
 public enum AfkStatus
     ACTIVE
-    AFK
-    AFK_INCREMENT
+    ACTIVE_BENCHED
+    AFK_IN_GAME
+    AFK_BENCHED
+    AFK_BENCHED_INCREMENT
 
 public function player.toSTP() returns STPlayer
     return stPlayers[this.getId()]
@@ -59,7 +61,7 @@ public class STPlayer
         this.index = index
 
     function isActive() returns boolean
-        return p.isPlaying() and status == AfkStatus.ACTIVE
+        return p.isPlaying() and (status == AfkStatus.ACTIVE or status == AfkStatus.ACTIVE_BENCHED)
 
     function getStartPosition() returns vec2
         return START_POSITION[index]
@@ -79,6 +81,7 @@ public class STPlayer
         return u
 
     function selectAndPan(unit u)
+        p.clearSelection()
         p.select(u)
         p.panCameraTo(u.getPos())
 
@@ -114,7 +117,8 @@ public class STPlayer
 
     function awardXp(int amount)
         if (shepherd.isAlive())
-            shepherd.addXp(amount, true)
+            let modifier = Pow(1.25, shepherd.itemCount(STItemIds.CROWN).toReal())
+            shepherd.addXp((amount * modifier).toInt(), true)
         if (sheep.isAlive())
             sheep.addXp(amount, true)
 
@@ -128,6 +132,12 @@ public class STPlayer
 
     function toString() returns string
         return p.getNameColored()
+
+    function setSCToMax()
+        var maxSC = 0
+        for p in allPlayers
+            maxSC = max(p.sheepCount, maxSC)
+        sheepCount = maxSC
 
     
 init

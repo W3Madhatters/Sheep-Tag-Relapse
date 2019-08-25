@@ -36,16 +36,29 @@ public class Game
             currentRound.onStart()
 
     static function endRound()
+        for stp in allPlayers
+            if (stp.status == AfkStatus.ACTIVE_BENCHED)
+                Teams.shepherdPlayers.add(stp)
+                Teams.afkPlayers.remove(stp)
+                stp.status = AfkStatus.ACTIVE
+            if (stp.status == AfkStatus.AFK_IN_GAME)
+                Teams.sheepPlayers.remove(stp)
+                Teams.shepherdPlayers.remove(stp)
+                Teams.spiritPlayers.remove(stp)
+                Teams.afkPlayers.add(stp)
+                stp.status = AfkStatus.AFK_BENCHED
         destroy currentRound
         startNewRound()
     
     static function cancelRound()
         cancelTimer()
         currentRound.clean()
+        ClearTextMessages()
         endRound()
 
     static function restartRound()
         cancelTimer()
+        ClearTextMessages()
         currentRound.onStart()
         
     static function refreshLeader()
@@ -102,9 +115,15 @@ init
                 SetPlayerAllianceStateBJ(p1, stp.p, bj_ALLIANCE_ALLIED_ADVUNITS)
                 Game.refreshLeader()
 
-    FogEnable(false)
     doAfter(.1) ->
-        FogEnable(true)
-        Game.statBoard = new InitBoard()
+        FogMaskEnable(false)
+        FogEnable(false)
+
+        Game.statBoard = new InitBoard()    
         Game.startNewRound()
         Host.setHost()
+        doAfter(1) ->
+            FogEnable(true)
+            for stp in allPlayers
+                createVision(stp.p, FENCE_RECT, false).start()
+            

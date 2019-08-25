@@ -1,20 +1,23 @@
 package OnUnitCast
 import Constants
 import Frenzy
+import Utils
 
 function onCast()
     let abil = GetSpellAbilityId()
     let caster = GetTriggerUnit()
-    if (caster.hasAbility(abil))
+    if (caster.hasAbility(abil) and not caster.getAbility(abil).getField(ABILITY_BF_ITEM_ABILITY))
         let level = caster.getAbilityLevel(abil)
-        print("Caster: " + caster.getName() + " " + GetAbilityName(abil) + " " + caster.getAbilityLevel(abil).toString() + " " + caster.getAbilityManaCost(abil, caster.getAbilityLevel(abil)).toString())
+        print("Caster: " + caster.getName() + " " + GetAbilityName(abil) + " " + level.toString() + " " + caster.getAbilityCooldown(abil, level - 1).toString())
         if (caster.hasAbility(STAbilityIds.FRENZY) and 
-            caster.getAbilityManaCost(abil, 1) > 0)
+            caster.getAbilityManaCost(abil, 0) > 0)
             castFrenzy(caster, caster.getAbilityLevel(STAbilityIds.FRENZY))
-        if (caster.getAbilityCooldown(abil, level) > 0)
+        if (caster.inventorySize() > 0 and caster.getAbilityCooldown(abil, level - 1) > 0)
             let numRings = caster.itemCount(STItemIds.RING).toReal()
             if (numRings > 0)
-                caster.setAbilityCooldown(abil, level, BlzGetAbilityCooldown(abil, level) * Pow(.8, numRings))
+                BlzSetUnitAbilityCooldown(caster, abil, level - 1, BlzGetAbilityCooldown(abil, level - 1) * Pow(.8, numRings))
+    else if (abil == STAbilityIds.REFRESHMENT)
+        caster.resetCooldown()
 
 init   
     CreateTrigger()..registerAnyUnitEvent(EVENT_PLAYER_UNIT_SPELL_EFFECT)..addAction(() -> onCast())

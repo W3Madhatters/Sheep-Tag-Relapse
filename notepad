@@ -23,16 +23,16 @@ Wolf:
 	Stalk: Invisible and can move through farms, but very slow
 	
 Items:
-	Refreshment: Instantly resets all cooldowns.
-	Potion of Mana: Restores 75 mana when used.
-	Boots: Increases the movement speed of the Hero by 30 when worn.
-	Shield: Allows the bearer to become invulnerable to spells for 5 seconds. 20 mana
-	Ring: Reduces the cooldown of abilities by 20%.
-	Pendant: Increases maximum mana by 50.
-	Orb of Frost: Destroying a farm slows nearby sheep by 10%.
-	Orb of Fire: Destroying a farm deals 10 damage to nearby buildings and 3 damage to nearby sheep.
-	Starfall: Deals 120 damage to a random farm within 900 range
-	 
+40	Refreshment: Instantly resets all cooldowns.
+50	Potion of Mana: Restores 75 mana when used.
+125	Boots: Increases the movement speed of the Hero by 30 when worn.
+75	Shield: Allows the bearer to become invulnerable to spells for 5 seconds. 20 mana
+100	Ring: Reduces the cooldown of abilities by 20%.
+60	Pendant: Increases maximum mana by 50.
+120	Crown: Increases experience gained by 25%.
+175	Orb of Frost: Destroying a farm slows nearby sheep by 10%.
+225	Orb of Fire: Destroying a farm deals 10 damage to nearby buildings and 3 damage to nearby sheep.
+100	Lightning (serpent?) Ward: Places a ward on the ground that will deal 45 damage every second to a nearby farm. Can be killed by sheep. Lasts 30 seconds, 600 range.
 	
 	
 	
