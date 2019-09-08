@@ -201,8 +201,10 @@ init
                     stp.p.displayStats("|cffffcc00Average Time Alive as Sheep (-stimes / -sp)|r", p -> (p.timeAsSheepLiving / max(p.sheepPlayed, 1)).toTimeString(false))
                 case "-avgftimes"
                     stp.p.displayStats("|cffffcc00Average Time Before First Death as Sheep (-ftimes / -sp)|r", p -> (p.timeAsSheepFirst / max(p.sheepPlayed, 1)).toTimeString(false))
+                case "-d"
+                    printTimedToPlayer("|cffffcc00" + stp.toString() + ": |r Now deleting all your farms", TEXT_DURATION, stp.p)
+                    stp.destroyFarms(100)
 
-            
             let num = command.substring(1).toInt() - 1
             if num.isPlayerInGame() and stp.p.isAllyOf(players[num])
                 let g = args.dequeue().toInt()
