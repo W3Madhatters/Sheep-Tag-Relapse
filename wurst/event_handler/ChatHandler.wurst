@@ -10,7 +10,6 @@ import Teams
 import STPlayer
 import Host
 import Utils
-import Items
 import Modes
 
 function player.displayStats(string header, MapClosure<STPlayer, string> statGetter)
@@ -172,8 +171,7 @@ init
                 switch command
                     case "-g"
                         goldCommand(stp, args.dequeue(), Teams.shepherdPlayers)
-                    case "-buy"
-                        stp.purchaseItem(args.dequeue())
+                        
             else if (Teams.sheepPlayers.has(stp))
                 switch command
                     case "-g"

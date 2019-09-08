@@ -152,6 +152,6 @@ public class InitBoard extends Multiboard
             
 public class SurviveBoard extends Multiboard
     construct()
-        super("Sheep Tag |cff008800Survive|r", true, true, false, true)
+        super("Sheep Tag |cff008800Relapse|r", true, true, false, true)
  
     

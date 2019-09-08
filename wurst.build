@@ -1,6 +1,5 @@
 ---
 projectName: Relapse
 buildMapData:
-  name: DefaultName
-  fileName: DefaultFileName
-  author: DefaultAuthor
+  name: Sheep Tag |cff008800Relapse|r 2.0.0 # Name shown ingame, may be colored
+  fileName: Sheep-Tag-Relapse-2.0.0 # Name of the map file

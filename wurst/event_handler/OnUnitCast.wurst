@@ -6,9 +6,9 @@ import Utils
 function onCast()
     let abil = GetSpellAbilityId()
     let caster = GetTriggerUnit()
-    if (caster.hasAbility(abil) and not caster.getAbility(abil).getField(ABILITY_BF_ITEM_ABILITY))
+    if (caster.hasAbility(abil) and not caster.getAbility(abil).getField(ABILITY_BF_ITEM_ABILITY) and not caster.isDummy())
         let level = caster.getAbilityLevel(abil)
-        print("Caster: " + caster.getName() + " " + GetAbilityName(abil) + " " + level.toString() + " " + caster.getAbilityCooldown(abil, level - 1).toString())
+        // print("Caster: " + caster.getName() + " " + GetAbilityName(abil) + " " + level.toString() + " " + caster.getAbilityCooldown(abil, level - 1).toString())
         if (caster.hasAbility(STAbilityIds.FRENZY) and 
             caster.getAbilityManaCost(abil, 0) > 0)
             castFrenzy(caster, caster.getAbilityLevel(STAbilityIds.FRENZY))

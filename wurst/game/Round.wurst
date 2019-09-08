@@ -123,7 +123,7 @@ public class Round
                 stp.shepherd.show()
                 stp.shepherd.setPos(FENCE_CENTER)
                 stp.selectAndPan(stp.shepherd)
-            stp.shepherd.addXp(10000, false)
+            // stp.shepherd.addXp(10000, false)
             stp.shepherd.setMana(25)
         if (updateStats)
             for stp1 in Teams.sheepPlayers
