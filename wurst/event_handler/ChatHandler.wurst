@@ -176,6 +176,9 @@ init
                 switch command
                     case "-g"
                         goldCommand(stp, args.dequeue(), Teams.sheepPlayers)
+                    case "-d"
+                        printTimedToPlayer(SPACE_GOLD + "Destroying all farms", TEXT_DURATION, stp.p)
+                        stp.destroyFarms(1.0)
             
             switch command
                 case "-zoom"
@@ -211,7 +214,6 @@ init
                 case "-avgftimes"
                     stp.p.displayStats("|cffffcc00Average Time Before First Death as Sheep (-ftimes / -sp)|r", p -> (p.timeAsSheepFirst / max(p.sheepPlayed, 1)).toTimeString(false))
 
-            
             let num = command.substring(1).toInt() - 1
             if num.isPlayerInGame() and stp.p.isAllyOf(players[num])
                 let g = args.dequeue().toInt()
