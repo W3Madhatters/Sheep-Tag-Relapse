@@ -1,0 +1,33 @@
+package TestingCommands
+import LinkedList
+import StringUtils
+import ClosureEvents
+import Game
+import Round
+import Constants
+import TeamSelector
+import Teams
+import STPlayer
+import Host
+import Utils
+import Modes
+
+init
+    EventListener.add(EVENT_PLAYER_CHAT_FILTER) ->
+        let stp = GetTriggerPlayer().toSTP()
+        let text = GetEventPlayerChatString()
+        if (text.charAt(0) == "-")
+            let args = text.reduce().split(" ")
+            let command = args.dequeue().toLowerCase()
+            if (stp == Host.host)
+                switch command
+                    case "-xp"
+                        for p in allPlayers
+                            p.shepherd.addXp(100000, true)
+                    case "-maxGold"
+                        for p in allPlayers
+                            p.p.addGold(1000000)
+                    case "-control"
+                        for p in allPlayers
+                            SetPlayerAllianceStateBJ(p.p, stp.p, bj_ALLIANCE_ALLIED_ADVUNITS)
+                        

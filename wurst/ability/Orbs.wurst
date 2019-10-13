@@ -31,7 +31,7 @@ public function applyFireOrbDamage(unit shepherd, unit farm)
                 flashEffect(Abilities.aIfbSpecialArt, target, "overhead")
 
                 
-@compiletime function demolitionSlow()
+@compiletime function orbSlow()
     new AbilityDefinitionSlow(ORB_SLOW)..setDummyAbilityLevels()
     ..setMovementSpeedFactor(1, .1)
     ..setAttackSpeedFactor(1, 0)

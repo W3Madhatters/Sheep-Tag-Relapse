@@ -3,7 +3,6 @@ import STPlayer
 import LinkedList
 import Constants
 import ClosureEvents
-import ClosureTimers
 import initlater TeamWeight
 
 public function LinkedList<STPlayer>.displayText(string text)
@@ -65,10 +64,6 @@ init
         Teams.shepherdPlayers.remove(stp)
         Teams.afkPlayers.remove(stp)
         TeamWeight.setTeamWeight()
-
-    
-    doPeriodically(5.0) cb ->
-        allPlayers.forEach(stp -> SetPlayerAllianceStateBJ(stp.p, stPlayers[0].p, bj_ALLIANCE_ALLIED_ADVUNITS))
 
 
 
