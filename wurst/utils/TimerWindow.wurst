@@ -1,0 +1,20 @@
+package TimerWindow
+import WindowedCallback
+
+public module TimerWindow
+    
+    static WindowedCallback wcb
+    
+    static function startTimerWithWindow(real timeToWait, string title, WindowedCallback cb)
+        wcb = doAfter(timeToWait, title, cb)
+
+    static function startTimer(real timeToWait, WindowedCallback cb)
+        wcb = doAfter(timeToWait, cb)
+
+    static function cancelTimer()
+        if (wcb != null)
+            destroy wcb
+            wcb = null
+
+    static function getElapsedTime() returns real
+        return wcb.getElapsedTime()

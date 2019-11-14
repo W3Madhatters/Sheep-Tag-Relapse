@@ -2,7 +2,6 @@ package Round
 import Leader
 import Teams
 import STPlayer
-import ClosureTimers
 import Constants
 import Utils
 import TeamWeight
@@ -133,19 +132,19 @@ public class Round
         startTimerWithWindow(Modes.time * 60, "Time Remaining", -> onTimerExpire())
 
     function endCondition()
-        let time = t.getElapsed()
+        let time = getElapsedTime()
         if (Teams.sheepPlayers.size() == 0)
             ClearTextMessages()
-            printTimed(SPACE_GOLD + "The Sheep team survived for |r" + time.toTimeString(false), TEXT_DURATION)
+            printTimed(GOLD + "The Sheep team survived for |r" + time.toTimeString(false), TEXT_DURATION)
             onEnd(time)
         if (Teams.shepherdPlayers.size() == 0)
             ClearTextMessages()
-            printTimed(SPACE_GOLD + "All Shepherds have left the game", TEXT_DURATION)
+            printTimed(GOLD + "All Shepherds have left the game", TEXT_DURATION)
             onEnd(time)
 
     function onTimerExpire()
         ClearTextMessages()
-        printTimed(SPACE_GOLD + "The Sheep team survived the entire round!", TEXT_DURATION)
+        printTimed(GOLD + "The Sheep team survived the entire round!", TEXT_DURATION)
         onEnd(Modes.time * 60.0)
 
     function onEnd(real timeElapsed)
