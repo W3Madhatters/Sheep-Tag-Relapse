@@ -1,0 +1,45 @@
+package WindowedCallback
+import TimerUtils
+
+public function doAfter(real timeToWait, string windowTitle, WindowedCallback cb) returns WindowedCallback
+    cb.start(getTimer(), timeToWait, windowTitle)
+    return cb
+
+public function doAfter(real timeToWait, WindowedCallback cb) returns WindowedCallback
+    cb.start(getTimer(), timeToWait)
+    return cb
+
+public abstract class WindowedCallback
+    private timer t
+    private timerdialog timerWindow
+    private boolean windowed
+
+    abstract function call()
+
+    protected function start(timer whichTimer, real time, string title)
+        t = whichTimer
+            ..setData(this castTo int)
+            ..start(time, () -> staticCallback())
+        
+        timerWindow = t.createTimerDialog()..setTitle(title)
+        timerWindow.display(true)
+        windowed = true
+
+    protected function start(timer whichTimer, real time)
+        t = whichTimer
+            ..setData(this castTo int)
+            ..start(time, () -> staticCallback())
+
+    function getElapsedTime() returns real
+        return t.getElapsed()
+
+    private static function staticCallback()
+        timer t = GetExpiredTimer()
+        thistype cb = t.getData() castTo thistype
+        cb.call()
+        destroy cb
+
+    ondestroy
+        t.release()
+        if windowed
+            timerWindow.destr()
