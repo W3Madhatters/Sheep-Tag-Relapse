@@ -2,6 +2,7 @@ package Sheep
 import ClosureEvents
 import STPlayer
 import Constants
+import Teams
 
 init
 
@@ -13,3 +14,11 @@ init
                 last.remove()
                 stp.farmCount -= 1
                 break
+
+    EventListener.onCast(STAbilityIds.PING) (caster) ->
+        let stp = caster.getOwner().toSTP()
+        for stp2 in Teams.sheepPlayers
+            if (stp != stp2 and localPlayer == stp.p)
+                let pos = stp2.sheep.getPos()
+                PingMinimapEx(pos.x, pos.y, 2.0, 0, 0, 255, false)
+                
