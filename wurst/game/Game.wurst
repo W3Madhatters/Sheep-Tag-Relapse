@@ -11,6 +11,9 @@ import Host
 import TeamSelector
 import Modes
 import TimerWindow
+import TerrainUtils
+import Form
+import ClosureForGroups
 
 public class Game
     use TimerWindow
@@ -18,10 +21,15 @@ public class Game
     static Round currentRound
     static Multiboard statBoard
 
+    static Form form
+    static fogmodifier array[MAX_PLAYERS] modifiers
+    static boolean setup = true
+
     static real longestRoundTime = 0.0
     static string longestRoundString = ""
     static real shortestRoundTime = 9999999.0
     static string shortestRoundString = ""
+
 
     static function startRound(TeamSelector teamSelector)
         cancelTimer()
@@ -30,10 +38,30 @@ public class Game
         currentRound.onStart()
 
     static function startNewRound()
-        currentRound = new Round()
+        currentRound = Modes.newRound()
         refreshLeader()
-        startTimerWithWindow(10, "Mode Selection") ->
-            currentRound.onStart()
+        if Modes.customSetup
+            startTimerWithWindow(10, "Mode Selection") ->
+                currentRound.onStart()
+        else
+            if (Modes.currentRound < Modes.rounds)
+                Modes.currentRound += 1
+                printTimed("\n" + GOLD + "Sheep Tag |r" + RELAPSE_GREEN, 10.0)
+                printTimed("By Madhatters", 10.0)
+                printTimed("\n" + GOLD + "Join the Sheep Tag discord at |rhttp://tiny.cc/sheeptag", 10.0)
+                printTimed("\n" + GOLD + "Round |r" + Modes.currentRound.toString() + GOLD + " of |r" + Modes.rounds.toString() + GOLD + " will begin in |r10 seconds", 10.0)
+                Modes.setTeamSelector(new Smart(Teams.getNumSheep())..setTeams())
+                refreshLeader()
+                startTimerWithWindow(10, "Round Intermission") ->
+                    currentRound.onStart()
+            else
+                printTimed("\n" + GOLD + "Sheep Tag |r" + RELAPSE_GREEN + " \n", 30.0)
+                printTimed("By Madhatters", 30.0)
+                printTimed("\n" + GOLD + "Join the Sheep Tag discord at |rhttp://tiny.cc/sheeptag", 30.0)
+                printTimed("\n" + GOLD + "The game will end in 30 seconds", 30.0)
+                doAfter(30.0) () ->
+                    for stp in allPlayers
+                        CustomDefeatBJ(stp.p, "Thanks for playing!")
 
     static function endRound()
         for stp in allPlayers
@@ -62,47 +90,190 @@ public class Game
         currentRound.onStart()
         
     static function refreshLeader()
-        Game.currentRound.refreshLeader()
-        switch Game.currentRound.state
-            case MODES
-                statBoard.fillMultiboard()
-                currentRound.gameBoard.board.display(false)
-                statBoard.board.display(true)
-            case FINISHED
-                statBoard.fillMultiboard()
-                currentRound.gameBoard.board.display(false)
-                statBoard.board.display(true)
-            case COUNTDOWN
-                currentRound.refreshLeader()
-                statBoard.board.display(false)
-                currentRound.gameBoard.board.display(true)
-                currentRound.gameBoard.board.minimalize(false)
-            case STARTED
-                currentRound.refreshLeader()
-                statBoard.board.display(false)
-                currentRound.gameBoard.board.display(true)
-                if (Teams.shepherdPlayers.has(localPlayer.toSTP()))
+        if not setup
+            Game.currentRound.refreshLeader()
+            switch Game.currentRound.state
+                case MODES
+                    statBoard.fillMultiboard()
+                    currentRound.gameBoard.board.display(false)
+                    statBoard.board.display(true)
+                case FINISHED
+                    statBoard.fillMultiboard()
+                    currentRound.gameBoard.board.display(false)
+                    statBoard.board.display(true)
+                case COUNTDOWN
+                    currentRound.refreshLeader()
+                    statBoard.board.display(false)
+                    currentRound.gameBoard.board.display(true)
                     currentRound.gameBoard.board.minimalize(false)
-                else
+                case STARTED
+                    currentRound.refreshLeader()
+                    statBoard.board.display(false)
+                    currentRound.gameBoard.board.display(true)
+                    if (Teams.shepherdPlayers.has(localPlayer.toSTP()))
+                        currentRound.gameBoard.board.minimalize(false)
+                    else
+                        currentRound.gameBoard.board.minimalize(not localPlayer.toSTP().visibleLeaderBoard)
+                case SHEPHERDS_SPAWNED
+                    currentRound.refreshLeader()
+                    statBoard.board.display(false)
+                    currentRound.gameBoard.board.display(true)
                     currentRound.gameBoard.board.minimalize(not localPlayer.toSTP().visibleLeaderBoard)
-            case SHEPHERDS_SPAWNED
-                currentRound.refreshLeader()
-                statBoard.board.display(false)
-                currentRound.gameBoard.board.display(true)
-                currentRound.gameBoard.board.minimalize(not localPlayer.toSTP().visibleLeaderBoard)
 
     static function updateLeader(real elapsedTime)
         if (elapsedTime > longestRoundTime)
             if longestRoundString != ""
-                printTimed(SPACE_GOLD + "A new leader has emerged!", TEXT_DURATION)
+                printTimed(GOLD + "A new leader has emerged!", TEXT_DURATION)
             longestRoundTime = elapsedTime
             longestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
         if (elapsedTime < shortestRoundTime)
             if shortestRoundString != ""
-                printTimed(SPACE_GOLD + "A new loser has emerged!", TEXT_DURATION)
+                printTimed(GOLD + "A new loser has emerged!", TEXT_DURATION)
             shortestRoundTime = elapsedTime
             shortestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
    
+    static function beginSetup()
+        var pos = vec3(0, 600, 0)
+        let t1 = createTTEx(pos, "Welcome to", 14)
+        pos += vec2(350, -390)
+        let t2 = createTTEx(pos, "Sheep Tag\n         " + RELAPSE_GREEN, 20)
+        pos += vec2(-350, -355)
+        let t3 = createTTEx(pos, Host.host.toString() + " will have 30 seconds to select the game modes!", 14)
+
+        // printTimed(GOLD + "Welcome to Sheep Tag |r" + RELAPSE_GREEN + GOLD + "!|r", 5.0)
+        // printTimed("\n" + Host.host.toString() + GOLD + " has 30 seconds to select modes, then the game will begin!|r", 5.0)
+
+        for stp in allPlayers
+            modifiers[stp.index] = createVision(stp.p, SETUP_RECT, false)
+            modifiers[stp.index].start()
+            stp.p.setCameraBoundsToRect(SETUP_RECT)
+            stp.p.adjustCameraBounds(0, -1000, -1000, -1000, -1000)
+            stp.p.cameraSetupApply(false, gg_cam_Setup, 1.0)
+        SETUP_CENTER.setTerrainType('Jwmb', 0, 5, 1)
+
+        doAfter(5.0) () ->
+            CinematicFadeBJ( bj_CINEFADETYPE_FADEOUTIN, 3.00, "ReplaceableTextures\\CameraMasks\\Black_mask.blp", 0, 0, 0, 0 )
+            doAfter(1.5) () ->
+                t1.destr()
+                t2.destr()
+                t3.destr()
+                RemoveDestructable( gg_dest_B001_0423 )
+                RemoveDestructable( gg_dest_B002_0425 )
+                RemoveDestructable( gg_dest_B003_0426 )
+                createForm()
+            
+    static function createForm()
+        let valueColor = GREEN
+
+        let styles = asList(Style.SURVIVE, Style.SWITCH, Style.VAMPIRE)
+        let styleOptions = styles.map() (Style s) ->
+            return new Option(Modes.styleToString(s), valueColor + Modes.styleToString(s)) () ->
+                Modes.style = s
+                let fields = Game.form.fields
+                let form = Game.form
+                switch s
+                    case SURVIVE
+                        fields.get(1).select(form, Teams.getNumSheep() - 1)
+                        fields.get(2).select(form, 3)
+                        fields.get(3).select(form, 2)
+                        fields.get(4).select(form, 1)
+                        fields.get(5).select(form, 0)
+                        fields.get(6).select(form, 0)
+                    case SWITCH
+                        fields.get(2).select(form, 0)
+                        fields.get(3).select(form, 5)
+                        fields.get(4).select(form, 0)
+                        fields.get(5).select(form, 0)
+                        fields.get(6).select(form, 3)
+                    case VAMPIRE 
+                        let sheepOpts = fields.get(1)
+                        sheepOpts.select(form, (sheepOpts.options.size() - sheepOpts.options.size() > 4 ? 2 : 1))
+                        fields.get(2).select(form, 3)
+                        fields.get(3).select(form, 5)
+                        fields.get(4).select(form, 0)
+                        fields.get(5).select(form, 5)
+                        fields.get(6).select(form, 0)
+                    default
+        destroy styles
+
+        let numberOfSheepOptions = new LinkedList<Option>()
+        for i = 1 to allPlayers.size() - 1
+            let opt = new Option(valueColor + i.toString()) ->
+                Modes.sheepRatio = i / allPlayers.size()
+            numberOfSheepOptions.add(opt)
+
+        let gold = asList(0, 50, 100, 200, 500, 1000, 100000)
+        let sheepGoldOptions = gold.map() (integer g) ->
+            return new Option(valueColor + g.toString(), () -> begin
+                Modes.sheepGold = g
+            end)
+        let shepherdGoldOptions = gold.map() (integer g) ->
+            return new Option(valueColor + g.toString(), () -> begin
+                Modes.shepherdGold = g
+            end)
+        destroy gold
+
+        let rounds = asList(1, 2, 4, 6, 8, 10, 20)
+        let roundOptions = rounds.map() (integer r) ->
+            return new Option(valueColor + r.toString(), () -> begin
+                Modes.rounds = r
+            end)
+        destroy rounds
+
+        let roundLength = asList(4, 6, 10, 15, 20, 30, 60)
+        let roundLengthOptions = roundLength.map() (integer r) ->
+            return new Option(valueColor + r.toString() + " Min", () -> begin
+                Modes.time = r.toReal()
+            end)
+        destroy roundLength
+
+        let f = asList<Field>(
+            new RadioButton("Game Mode", styleOptions),
+            new Slider("Number of Sheep", numberOfSheepOptions)..setDefault(Teams.getNumSheep() - 1),
+            new Slider("Number of Rounds", roundOptions)..setDefault(3),
+            new Slider("Round Length", roundLengthOptions)..setDefault(2),
+            new RadioButton("Vision", asList(
+        new Option("On", valueColor + "On", () -> begin
+            Modes.view = true 
+        end),
+        new Option("Off", valueColor + "Off", () -> begin
+            Modes.view = false 
+        end)
+        ))..setDefault(1),
+            new Slider("Shepherd Gold", shepherdGoldOptions)..setAttachmentPoint(AttachmentPoint.RIGHT),
+            new Slider("Sheep Gold", sheepGoldOptions)..setAttachmentPoint(AttachmentPoint.TOP)
+        )
+
+        Game.form = new Form(SETUP_RECT, f, "Sheep Tag " + RELAPSE_GREEN, Host.host.p)
+        Game.form.render()
+
+        startTimerWithWindow(30.0, "Setup") () ->
+            setup = false
+            for stp in allPlayers
+                modifiers[stp.index].destr()
+                stp.p.setCameraBoundsToRect(CAMERA_BOUNDS)
+                stp.setCamera()
+                stp.p.panCameraTo(FENCE_CENTER)
+
+            destroy form
+
+            FogMaskEnable(false)
+            FogEnable(false)
+
+            Game.startNewRound()
+
+            EnumDestructablesInRectAll(SETUP_RECT) () ->
+                GetEnumDestructable().remove()
+
+            doAfter(.1) () ->
+                SETUP_CENTER.setTerrainType('Lgrd', -1, 5, 1)
+
+                // FogEnable(true) 
+                for stp in allPlayers
+                    createVision(stp.p, FENCE_RECT, false).start()
+            
+            
+            
 
 init
     let t = CreateTrigger()
@@ -116,14 +287,9 @@ init
                 Game.refreshLeader()
 
     doAfter(.1) ->
-        FogMaskEnable(false)
-        FogEnable(false)
-
-        Game.statBoard = new InitBoard()    
-        Game.startNewRound()
+        forUnitsOfPlayer(NEUTRAL_HOSTILE, u -> u.remove())
+        Game.statBoard = new InitBoard()
+        Game.statBoard.board.display(false)
         Host.setHost()
-        doAfter(1) ->
-            FogEnable(true)
-            for stp in allPlayers
-                createVision(stp.p, FENCE_RECT, false).start()
+        Game.beginSetup()
             

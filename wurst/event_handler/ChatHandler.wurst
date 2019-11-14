@@ -54,6 +54,7 @@ function toggleAfk(STPlayer stp)
             Teams.shepherdPlayers.remove(stp)
             Teams.spiritPlayers.remove(stp)
             Teams.afkPlayers.add(stp)
+            print("AFK BENCHED")
             stp.status = AfkStatus.AFK_BENCHED
         else
             stp.controlAll = false
@@ -78,6 +79,13 @@ function toggleAfk(STPlayer stp)
             Teams.shepherdPlayers.add(stp)
             Teams.afkPlayers.remove(stp)
     print(stp.p.getNameColored() + " active: " + stp.isActive().toString())
+    for stp2 in Teams.afkPlayers
+        print(stp2.toString())
+    if (Game.currentRound.state == State.MODES)
+        Modes.setTeamSelector(new Smart(Teams.getNumSheep())..setTeams())
+    for stp2 in Teams.afkPlayers
+        print(stp2.toString())
+    print("refreshing leader")
     Game.refreshLeader()
 
 function setControl(STPlayer stp1, STPlayer stp2, boolean control)
@@ -108,50 +116,58 @@ init
         if (text.charAt(0) == "-")
             let args = text.reduce().split(" ")
             let command = args.dequeue().toLowerCase()
-            if (stp == Host.host and Game.currentRound.state == State.MODES)
-                switch command
-                    case "-gold"
-                        if (args.size() >= 2)
-                            Modes.sheepGold = min(args.dequeue().toInt().abs(), 1000000)
-                            Modes.shepherdGold = min(args.dequeue().toInt().abs(), 1000000)
-                            printTimed(SPACE_GOLD + "Set Sheep starting gold to |r" + Modes.sheepGold.toString(), TEXT_DURATION)
-                            printTimed(SPACE_GOLD + "Set Shepherd starting gold to |r" + Modes.shepherdGold.toString(), TEXT_DURATION)
-                        else
-                            Modes.sheepGold = min(args.dequeue().toInt(), 1000000)
-                            Modes.shepherdGold = Modes.sheepGold
-                            printTimed(SPACE_GOLD + "Set starting gold to |r" + Modes.sheepGold.toString(), TEXT_DURATION)
-                    case "-time"
-                        Modes.time = min(args.dequeue().toReal().abs(), 100.0)
-                        printTimed(SPACE_GOLD + "Set round length to |r" + Modes.time.toString(2) + " minutes", TEXT_DURATION)
-                    case "-vtime"
-                        Modes.vTime = min(args.dequeue().toReal().abs(), 100.0)
-                        printTimed(SPACE_GOLD + "Set versus second round minimum length to |r" + Modes.vTime.toString(2) + " minutes", TEXT_DURATION)
-                    case "-view"
-                        Modes.view = not Modes.view
-                        printTimed(SPACE_GOLD + "Set map visibility to |r" + ((Modes.view) ? "on" : "off"), TEXT_DURATION)
-                    case "-start"
-                        if (args.size() > 0)
-                            Game.startRound(new TeamSelector(args.dequeue().toInt()))
-                        else
-                            Game.startRound(new TeamSelector())
-                    case "-reverse"
-                        if (args.size() > 0)
-                            Game.startRound(new Reverse(args.dequeue().toInt()))
-                        else
-                            Game.startRound(new Reverse())
-                    case "-random"
-                        Game.startRound(new Random(args.dequeue().toInt()))
-                    case "-smart"
-                        Game.startRound(new Smart(args.dequeue().toInt()))
-                    case "-switch"
-                        Modes.style = Style.SWITCH
-                        printTimed(SPACE_GOLD + "Set mode to|r switch", TEXT_DURATION)
-                    case "-survive"
-                        Modes.style = Style.SURVIVE
-                        printTimed(SPACE_GOLD + "Set mode to|r survive", TEXT_DURATION)
-                    case "-vamp"
-                        Modes.style = Style.VAMPIRE
-                        printTimed(SPACE_GOLD + "Set mode to|r vamp", TEXT_DURATION)
+            if (Modes.customSetup)
+                if (stp == Host.host and Game.currentRound.state == State.MODES)
+                    switch command
+                        case "-gold"
+                            if (args.size() >= 2)
+                                Modes.sheepGold = min(args.dequeue().toInt().abs(), 1000000)
+                                Modes.shepherdGold = min(args.dequeue().toInt().abs(), 1000000)
+                                printTimed(SPACE_GOLD + "Set Sheep starting gold to |r" + Modes.sheepGold.toString(), TEXT_DURATION)
+                                printTimed(SPACE_GOLD + "Set Shepherd starting gold to |r" + Modes.shepherdGold.toString(), TEXT_DURATION)
+                            else
+                                Modes.sheepGold = min(args.dequeue().toInt(), 1000000)
+                                Modes.shepherdGold = Modes.sheepGold
+                                printTimed(SPACE_GOLD + "Set starting gold to |r" + Modes.sheepGold.toString(), TEXT_DURATION)
+                        case "-time"
+                            Modes.time = min(args.dequeue().toReal().abs(), 100.0)
+                            printTimed(SPACE_GOLD + "Set round length to |r" + Modes.time.toString(2) + " minutes", TEXT_DURATION)
+                        case "-vtime"
+                            Modes.vTime = min(args.dequeue().toReal().abs(), 100.0)
+                            printTimed(SPACE_GOLD + "Set versus second round minimum length to |r" + Modes.vTime.toString(2) + " minutes", TEXT_DURATION)
+                        case "-view"
+                            Modes.view = not Modes.view
+                            printTimed(SPACE_GOLD + "Set map visibility to |r" + ((Modes.view) ? "on" : "off"), TEXT_DURATION)
+                        case "-start"
+                            if (args.size() > 0)
+                                Game.startRound(new TeamSelector(args.dequeue().toInt()))
+                            else
+                                Game.startRound(new TeamSelector())
+                        case "-reverse"
+                            if (args.size() > 0)
+                                Game.startRound(new Reverse(args.dequeue().toInt()))
+                            else
+                                Game.startRound(new Reverse())
+                        case "-random"
+                            Game.startRound(new Random(args.dequeue().toInt()))
+                        case "-smart"
+                            Game.startRound(new Smart(args.dequeue().toInt()))
+                        case "-switch"
+                            Modes.style = Style.SWITCH
+                            printTimed(SPACE_GOLD + "Set mode to|r switch", TEXT_DURATION)
+                        case "-survive"
+                            Modes.style = Style.SURVIVE
+                            printTimed(SPACE_GOLD + "Set mode to|r survive", TEXT_DURATION)
+                        case "-vamp"
+                            Modes.style = Style.VAMPIRE
+                            printTimed(SPACE_GOLD + "Set mode to|r vamp", TEXT_DURATION)
+
+                if (stp == Host.host and Game.currentRound.isCancelable())
+                    switch command
+                        case "-cancel"
+                            Game.cancelRound()
+                        case "-restart"
+                            Game.restartRound()
 
             if (stp == Host.host)
                 switch command
@@ -159,13 +175,6 @@ init
                         let p = args.dequeue().toInt() - 1
                         if (p.isPlayerInGame())
                             toggleAfk(p.toSTP())
-
-            if (stp == Host.host and Game.currentRound.isCancelable())
-                switch command
-                    case "-cancel"
-                        Game.cancelRound()
-                    case "-restart"
-                        Game.restartRound()
 
             if (Teams.shepherdPlayers.has(stp))
                 switch command
@@ -185,7 +194,7 @@ init
                     toggleAfk(stp)
                 case "-c"
                     controlCommand(stp, args.dequeue())
-                case "leader"
+                case "-leader"
                     printTimedToPlayer("|cffffcc00Leader: |r" + Game.longestRoundString, TEXT_DURATION, stp.p)
                     printTimedToPlayer("|cffffcc00Loser: |r" + Game.shortestRoundString, TEXT_DURATION, stp.p)
                 case "-sc"
@@ -211,7 +220,6 @@ init
                 case "-avgftimes"
                     stp.p.displayStats("|cffffcc00Average Time Before First Death as Sheep (-ftimes / -sp)|r", p -> (p.timeAsSheepFirst / max(p.sheepPlayed, 1)).toTimeString(false))
 
-            
             let num = command.substring(1).toInt() - 1
             if num.isPlayerInGame() and stp.p.isAllyOf(players[num])
                 let g = args.dequeue().toInt()

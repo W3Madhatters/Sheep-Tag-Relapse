@@ -1,13 +1,19 @@
 package Constants
 
-public int MAX_PLAYERS = 12
+public constant int MAX_PLAYERS = 12
 
 public rect FENCE_RECT = gg_rct_Fenze_Zone
 public vec2 FENCE_CENTER = gg_rct_Fenze_Zone.getCenter()
 
 public player NEUTRAL_PASSIVE = Player(PLAYER_NEUTRAL_PASSIVE)
+public player NEUTRAL_HOSTILE = Player(PLAYER_NEUTRAL_AGGRESSIVE)
 
 public rect ENTIRE_MAP = bj_mapInitialPlayableArea
+public rect CAMERA_BOUNDS = bj_mapInitialCameraBounds
+
+public rect SETUP_RECT = gg_rct_Setup
+public vec2 SETUP_CENTER = gg_rct_Setup.getCenter()
+
 
 public vec2 array START_POSITION = [
     FENCE_CENTER + vec2(16, -784),
@@ -26,6 +32,9 @@ public vec2 array START_POSITION = [
 
 public string SPACE = "                        "
 public string SPACE_GOLD = SPACE + "|cffffcc00"
+public string RELAPSE_GREEN = "|cff008800Relapse|r"
+public string GREEN = "|cff008800"
+public string GOLD = "|cffffcc00"
 
 public real TEXT_DURATION = 7.0
 
@@ -40,9 +49,11 @@ public class STUnitIds
     static constant LIGHTNING_WARD = 'o000'
     static constant HERO_SELECTOR = 'n003'
     static constant HERO_SELECTOR_NAME = "custom_n003"
+    static constant FORM_UNIT = 'u000'
 
 public class STAbilityIds
     static constant X = 'A00G'
+    static constant PING = 'A00T'
     static constant DEMOLTIION = 'A00P'
     static constant TORCH = 'A03J'
     static constant JUGGERNAUT = 'A00R'

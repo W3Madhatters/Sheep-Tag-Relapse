@@ -1,7 +1,8 @@
 package Modes
-import TeamSelector
+import initlater TeamSelector
+import initlater Round
 
-enum Style
+public enum Style
     SURVIVE
     SWITCH
     VAMPIRE
@@ -9,14 +10,44 @@ enum Style
 
 public class Modes
 
-    static int sheepGold = 10000
-    static int shepherdGold = 10000
+    static int sheepGold = 0
+    static int shepherdGold = 0
     static boolean view = false
     static real time = 10.0
     static real vTime = 10.0
+
+    static boolean customSetup = false
+    static int rounds = 4
+    static int currentRound = 0
+    static real sheepRatio = 0
+
     static Style style = Style.SURVIVE
     static TeamSelector teamSelector = new TeamSelector()
 
     static function setTeamSelector(TeamSelector teamSelector)
         destroy Modes.teamSelector
         Modes.teamSelector = teamSelector
+
+    static function styleToString(Style style) returns string
+        switch style
+            case PRACTICE
+                return "Practice"
+            case SURVIVE
+                return "Survival"
+            case SWITCH
+                return "Switch"
+            case VAMPIRE
+                return "Vampire"
+
+    static function newRound() returns Round
+        switch style
+            case PRACTICE
+                return new Round()
+            case SURVIVE
+                return new Round()
+            case SWITCH
+                return new Round()
+            case VAMPIRE
+                return new Round()
+
+

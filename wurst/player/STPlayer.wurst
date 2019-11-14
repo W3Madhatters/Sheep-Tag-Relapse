@@ -1,5 +1,4 @@
 package STPlayer
-import ClosureTimers
 import LinkedList
 import Constants
 import Utils
@@ -59,6 +58,7 @@ public class STPlayer
     construct(player p, int index)
         this.p = p
         this.index = index
+        SetPlayerState(p, PLAYER_STATE_RESOURCE_FOOD_CAP, 200)
 
     function isActive() returns boolean
         return p.isPlaying() and (status == AfkStatus.ACTIVE or status == AfkStatus.ACTIVE_BENCHED)
@@ -117,7 +117,7 @@ public class STPlayer
 
     function awardXp(int amount)
         if (shepherd.isAlive())
-            let modifier = Pow(1.25, shepherd.itemCount(STItemIds.CROWN).toReal())
+            let modifier = Pow(1.15, shepherd.itemCount(STItemIds.CROWN).toReal())
             shepherd.addXp((amount * modifier).toInt(), true)
         if (sheep.isAlive())
             sheep.addXp(amount, true)
@@ -145,10 +145,6 @@ init
         if (players[i].isPlaying())
             stPlayers[i] = new STPlayer(players[i], i)
             allPlayers.push(stPlayers[i])
-                
-    doPeriodically(1.0) cb ->
-        allPlayers.forEach(stp -> stp.setCamera())    
-
     
     
 

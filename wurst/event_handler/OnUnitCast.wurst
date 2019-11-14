@@ -15,7 +15,7 @@ function onCast()
         if (caster.inventorySize() > 0 and caster.getAbilityCooldown(abil, level - 1) > 0)
             let numRings = caster.itemCount(STItemIds.RING).toReal()
             if (numRings > 0)
-                BlzSetUnitAbilityCooldown(caster, abil, level - 1, BlzGetAbilityCooldown(abil, level - 1) * Pow(.8, numRings))
+                BlzSetUnitAbilityCooldown(caster, abil, level - 1, BlzGetAbilityCooldown(abil, level - 1) * Pow(.75, numRings))
     else if (abil == STAbilityIds.REFRESHMENT)
         caster.resetCooldown()
 

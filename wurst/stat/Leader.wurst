@@ -5,11 +5,13 @@ import LinkedList
 import ClosureTimers
 import StringUtils
 import Utils
+import Modes
+import Constants
 
 public Multiboard statBoard
 
 public class Multiboard
-    string title = "Sheep Tag |cff008800Relapse|r"
+    string title = "Sheep Tag" + RELAPSE_GREEN
     boolean addSpirits = false
     boolean addShepherds = true
     boolean addAFK = true
@@ -88,7 +90,7 @@ public class Multiboard
 
     function addAFK()
         setCurrentRow(Teams.afkPlayers.size().toString() + " AFK")
-        for stp from Teams.afkPlayers.staticItr()
+        for stp in Teams.afkPlayers
             stp.boardRow = currentRow
             setCurrentRow(INDENT + stp.p.getNameColored() + "," + getAFKValue(stp))
 
@@ -131,7 +133,11 @@ public class Multiboard
 
 public class InitBoard extends Multiboard
     construct()
-        super("Sheep Tag |cff008800Relapse|r", false, true, true, false)
+        super("Sheep Tag " + RELAPSE_GREEN, false, true, true, false)
+    
+    override function fillMultiboard()
+        super.fillMultiboard()
+        board.setTitle(title + " (Round " + Modes.currentRound.toString() + "/" + Modes.rounds.toString() + ")")
 
     override function getColSize() returns LinkedList<real>
         return asList(.10, .04, .04, .06)
@@ -152,6 +158,6 @@ public class InitBoard extends Multiboard
             
 public class SurviveBoard extends Multiboard
     construct()
-        super("Sheep Tag |cff008800Relapse|r", true, true, false, true)
+        super("Sheep Tag " + RELAPSE_GREEN, true, true, false, true)
  
     

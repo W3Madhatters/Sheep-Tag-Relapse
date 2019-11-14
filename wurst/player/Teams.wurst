@@ -3,6 +3,7 @@ import STPlayer
 import LinkedList
 import Constants
 import ClosureEvents
+import Modes
 import initlater TeamWeight
 
 public function LinkedList<STPlayer>.displayText(string text)
@@ -32,6 +33,18 @@ public class Teams
     static LinkedList<STPlayer> shepherdPlayers = new LinkedList<STPlayer>()
     static LinkedList<STPlayer> afkPlayers = new LinkedList<STPlayer>()
 
+    static function countActivePlayers() returns int
+        var count = 0
+        for stp in allPlayers
+            if stp.isActive()
+                count += 1
+        return count
+
+    static function getNumSheep() returns int
+        let a = countActivePlayers()
+        let n = (Modes.sheepRatio * a + .5).toInt()
+        return (n == a) ? n - 1 : n
+
     static function setAlliances()
         // Ally within teams
         sheepPlayers.setAlliance(bj_ALLIANCE_ALLIED_VISION)
@@ -47,7 +60,8 @@ public class Teams
 
 
 init
-    let numSheep = allPlayers.size() / 2
+    Modes.sheepRatio = (allPlayers.size() >= 9) ? 0.62 : 0.58
+    let numSheep = Teams.getNumSheep()
     for stp in allPlayers
         if (Teams.sheepPlayers.size() < numSheep)
             Teams.sheepPlayers.add(stp)

@@ -2,6 +2,7 @@ package Host
 import STPlayer
 import ClosureTimers
 import Constants
+import Modes
 import initlater Game
 
 public class Host
@@ -15,8 +16,8 @@ public class Host
             let iter = allPlayers.iterator()
             while (iter.hasNext() and (host == null or not host.isActive()))
                 host = iter.next()
-            if (host != null)
-                print(SPACE + host.p.getNameColored() + " |cffffcc00is host|r")
+            if (host != null and Modes.customSetup)
+                printTimed(SPACE + host.p.getNameColored() + " |cffffcc00is host|r", TEXT_DURATION)
                 Game.refreshLeader()
             iter.close()
 

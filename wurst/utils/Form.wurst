@@ -1,0 +1,219 @@
+package Form
+import LinkedList
+import Constants
+import ClosureEvents
+import Abilities
+
+public class Form
+
+    rect formRegion
+    LinkedList<Field> fields
+    string title
+    player owner
+
+    real titleFontSize = 16.0
+    real fontSize = 12.0
+    real buttonSize = 1.0
+    real buttonDistanceHeight = 1.75
+    real buttonDistanceWidth = 3.75
+    real buttonPaddingWidth = .25
+    real buttonPaddingHeight = .5
+    real fieldPaddingHeight = 1.1
+    real fieldPaddingWidth = .5
+    real sideMargin = 2.75
+    real topMargin = 3
+
+    colorA defaultColor = colorA(255, 255, 255, 255)
+    colorA selectedColor = colorA(0, 136, 0, 255)
+
+    constant SPACE_SIZE = 64.0
+    constant SHIFT = 50.0
+
+    texttag textTag
+
+    construct(rect formRegion, LinkedList<Field> fields, string title, player owner)
+        this.formRegion = formRegion
+        this.fields = fields
+        this.title = title
+        this.owner = owner
+        
+    function render()
+        var pos = (formRegion.getLeftTop() + vec2(sideMargin * SPACE_SIZE, -1 * topMargin * SPACE_SIZE)).toVec3()
+        textTag = createTTEx(pos, title, titleFontSize)
+
+        var lastSize = vec2(0, fieldPaddingHeight * SPACE_SIZE)
+        vec2 size
+        for field in fields
+            size = field.getSize(this)
+            switch field.attachmentPoint
+                case AttachmentPoint.TOP
+                    pos += vec2(0, size.y + fieldPaddingHeight * SPACE_SIZE)
+                case AttachmentPoint.BOTTOM
+                    pos -= vec2(0, lastSize.y + fieldPaddingHeight * SPACE_SIZE)
+                case AttachmentPoint.RIGHT 
+                    pos += vec2(lastSize.x + fieldPaddingWidth * SPACE_SIZE, 0)
+                case AttachmentPoint.LEFT
+                    pos -= vec2(size.x + fieldPaddingWidth * SPACE_SIZE, 0)
+            field.render(this, pos)
+            lastSize = size
+        
+    function createButton(vec3 pos, int unitType, EventListener listener) returns unit
+        let u = createUnit(NEUTRAL_PASSIVE, unitType, pos, bj_UNIT_FACING.fromDeg())
+        u.pause()
+        u.setVertexColor(defaultColor)
+        EventListener.add(u, EVENT_PLAYER_UNIT_SELECTED, listener)
+        return u
+
+    function createLabel(vec3 pos, string text, real fontSize)
+        createTTEx(pos, text, fontSize)
+
+    ondestroy
+        for field in fields
+            destroy field
+        textTag.destr()
+
+
+enum AttachmentPoint
+    TOP
+    BOTTOM
+    RIGHT
+    LEFT
+
+public abstract class Field
+
+    string label
+    LinkedList<Option> options
+    Option selected
+    texttag textTag
+    AttachmentPoint attachmentPoint = AttachmentPoint.BOTTOM
+
+    construct(string label, LinkedList<Option> options)
+        this.label = label
+        this.options = options
+        if (options.size() > 0)
+            this.selected = options.get(0)
+
+    function setAttachmentPoint(AttachmentPoint attachmentPoint)
+        this.attachmentPoint = attachmentPoint
+    
+    function setDefault(int optionNum)
+        this.selected = options.get(optionNum)
+
+    function select(Form parent, Option option)
+        selected.select(parent, false)
+        selected = option
+        flashEffect("Objects\\Spawnmodels\\NightElf\\EntBirthTarget\\EntBirthTarget.mdl", selected.uButton.getPos(), .75, 0.0.fromDeg())
+        selected.select(parent, true)
+        selected.action.run()
+        textTag.setText(label + ": " + selected.value, parent.fontSize)
+
+    function select(Form parent, int optionNum)
+        select(parent, options.get(optionNum))
+
+    function getSize(Form parent) returns vec2
+        return vec2(options.size() * parent.buttonDistanceWidth * parent.SPACE_SIZE, parent.buttonDistanceHeight * parent.SPACE_SIZE)
+            
+    function render(Form parent, vec3 startingPos) returns vec3
+        textTag = createTTEx(startingPos + vec2(-1 * parent.buttonSize * parent.SPACE_SIZE / 2, parent.buttonPaddingHeight * parent.SPACE_SIZE), label, parent.fontSize)
+        if (selected != null)
+            select(parent, selected)
+        return startingPos
+    
+    ondestroy
+        for option in options
+            destroy option
+        destroy options
+        textTag.destr()
+
+
+public class RadioButton extends Field
+
+    construct(string label, LinkedList<Option> options)
+        super(label, options)
+
+    override function render(Form parent, vec3 startingPos) returns vec3
+        var optPos = startingPos
+        for option in options
+            option.createButton(parent, optPos) ->
+                let p = GetTriggerPlayer()
+                p.clearSelection()
+                if (p == parent.owner)
+                    select(parent, option)
+            option.createLabel(parent, optPos + vec2(parent.buttonPaddingWidth * parent.SPACE_SIZE, 0))
+            optPos += vec2(parent.buttonDistanceWidth * parent.SPACE_SIZE, 0)
+        super.render(parent, startingPos)
+        return optPos
+
+
+public class Slider extends Field
+
+    construct(string label, LinkedList<Option> options)
+        super(label, options)
+
+    override function select(Form parent, Option option)
+        super.select(parent, option)
+        var select = true
+        for opt in options
+            opt.select(parent, select)
+            if (selected == opt)
+                select = false
+
+    override function getSize(Form parent) returns vec2
+        return vec2(options.size() * parent.buttonSize * parent.SPACE_SIZE, parent.buttonDistanceHeight * parent.SPACE_SIZE)
+
+    override function render(Form parent, vec3 startingPos) returns vec3
+        textTag.setText(label + ": " + selected.value, parent.fontSize)
+        var optPos = startingPos
+        for option in options
+            option.createButton(parent, optPos) ->
+                let p = GetTriggerPlayer()
+                p.clearSelection()
+                if (p == parent.owner)
+                    select(parent, option)
+            optPos = optPos + vec2(parent.buttonSize * parent.SPACE_SIZE, 0)
+        super.render(parent, startingPos)
+        return optPos
+
+
+public class Option
+    string label
+    string value
+    int unitType = STUnitIds.FORM_UNIT
+    OptionAction action
+
+    unit uButton
+    texttag textTag
+
+    construct(string label, OptionAction action)
+        this.label = label
+        this.value = label
+        this.action = action
+
+    construct(string label, string value, OptionAction action)
+        this.label = label
+        this.value = value
+        this.action = action
+
+    function createButton(Form parent, vec3 pos, EventListener listener)
+        uButton = parent.createButton(pos, unitType, listener)
+        uButton.setName(label)
+
+    function createLabel(Form parent, vec3 pos)
+        textTag = createTTEx(pos - vec2(0, parent.buttonSize * parent.SPACE_SIZE / 2), label, parent.fontSize)
+
+    function select(Form parent, boolean select)
+        if (select)
+            uButton.setVertexColor(parent.selectedColor)
+        else
+            uButton.setVertexColor(parent.defaultColor)
+
+
+    ondestroy
+        uButton.remove()
+        if textTag != null
+            textTag.destr()
+        destroy action
+
+
+public interface OptionAction
+    function run()

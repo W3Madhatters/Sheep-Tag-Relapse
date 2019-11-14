@@ -21,17 +21,20 @@ public class PeriodicHandler
         goldStorageSheep += TeamWeight.goldPerSecondSheep
         for stp in Teams.sheepPlayers
             stp.p.addGold(goldStorageSheep.toInt())
+            stp.p.setLumber(stp.farmCount)
+            stp.setCamera()
         goldStorageSheep -= goldStorageSheep.toInt()
 
         goldStorageShepherd += TeamWeight.goldPerSecondShepherd
         for stp in Teams.shepherdPlayers
             stp.p.addGold(goldStorageShepherd.toInt())
-            stp.awardXp(TeamWeight.xpPerSecond)
+            stp.setCamera()
         goldStorageShepherd -= goldStorageShepherd.toInt()
 
-        for stp in Teams.sheepPlayers
-            stp.p.setLumber(stp.farmCount)
-
+        if Game.currentRound.state == State.SHEPHERDS_SPAWNED
+            for stp in Teams.shepherdPlayers
+                stp.awardXp(TeamWeight.xpPerSecond)
+                
         if Game.currentRound.updateStats and Game.currentRound.state == State.SHEPHERDS_SPAWNED
             for stp in Teams.sheepPlayers
                 stp.timeAsSheepLiving += 1

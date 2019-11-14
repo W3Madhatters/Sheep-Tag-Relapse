@@ -6,6 +6,7 @@ import STPlayer
 import TeamWeight
 import Teams
 import initlater Game
+import initlater Round
 
 public abstract class DeathHandler
 
@@ -37,7 +38,7 @@ public abstract class DeathHandler
             killerSTP.kills += 1
             killerSTP.totalKills += 1
             if dyingSTP.deaths == 1
-                dyingSTP.timeAsSheepFirst += Game.t.getElapsed()
+                dyingSTP.timeAsSheepFirst += Round.getElapsedTime()
 
         Game.currentRound.refreshLeader()
 
