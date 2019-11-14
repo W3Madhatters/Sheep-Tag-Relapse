@@ -185,6 +185,9 @@ init
                 switch command
                     case "-g"
                         goldCommand(stp, args.dequeue(), Teams.sheepPlayers)
+                    case "-d"
+                        printTimedToPlayer(SPACE_GOLD + "Destroying all farms", TEXT_DURATION, stp.p)
+                        stp.destroyFarms(1.0)
             
             switch command
                 case "-zoom"
