@@ -1,0 +1,56 @@
+package Utils
+import Constants
+import AbilityObjEditing
+import DummyRecycler
+
+public function unit.isStructure() returns boolean
+    return this.isType(UNIT_TYPE_STRUCTURE)
+
+public function unit.isSheep() returns boolean
+    return this.getTypeId() == STUnitIds.SHEEP
+
+public function unit.isSpirit() returns boolean
+    return this.getTypeId() == STUnitIds.SPIRIT
+
+public function unit.isSheperd() returns boolean
+    return this.getTypeId() == STUnitIds.SHEPHERD
+
+public function unit.isWard() returns boolean
+    return this.getTypeId() == STUnitIds.WARD or this.getTypeId() == STUnitIds.LIGHTNING_WARD
+
+public function unit.isDummy() returns boolean
+    return this.getTypeId() == DUMMY_UNIT_ID
+
+public function unit.isSummoned() returns boolean
+    return IsUnitType(GetTriggerUnit(), UNIT_TYPE_SUMMONED)
+
+public function player.setFoodUsed(int amount)
+    SetPlayerState(this, PLAYER_STATE_RESOURCE_FOOD_USED, amount)
+
+public function player.isPlaying() returns boolean
+    return this.getSlotState() == PLAYER_SLOT_STATE_PLAYING
+
+public function force.size() returns int
+    return CountPlayersInForceBJ(this)
+
+public function real.toTimeString(boolean showDecimals) returns string
+    return this.toInt().toTimeString() + (showDecimals ? (this % 1).toString(2).substring(1) : "")
+
+public function integer.toTimeString() returns string
+    let min = (this div 60).toString()
+    let sec = this mod 60
+    return (sec > 9) ? min + ":" + sec.toString() : min + ":0" + sec.toString()
+
+public function integer.isPlayerInGame() returns boolean
+    return (this.isBetween(0, MAX_PLAYERS - 1) and players[this].isPlaying())
+
+public function AbilityDefinition.setDummyAbilityLevels() returns AbilityDefinition
+    this..setLevels(3)
+    ..setHeroAbility(false)
+    ..presetManaCost((int lvl) -> 0)
+    ..presetCooldown((int lvl) -> 0)
+    ..presetCastRange((int lvl) -> 99999)
+    ..setArtCaster("")
+    ..setArtEffect("")
+    ..setCheckDependencies(false)
+    return this
