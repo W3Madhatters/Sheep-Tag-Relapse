@@ -7,7 +7,7 @@ import initlater Round
 
 public class PeriodicHandler
     protected int count = 0
-    protected CallbackPeriodic callback
+    protected CallbackPeriodic callback = null
     protected real goldStorageSheep = 0
     protected real goldStorageShepherd = 0
 
@@ -32,13 +32,15 @@ public class PeriodicHandler
         goldStorageShepherd -= goldStorageShepherd.toInt()
 
         if Game.currentRound.state == State.SHEPHERDS_SPAWNED
+            for stp in Teams.sheepPlayers
+                stp.timeAsSheepCurrent += 1
             for stp in Teams.shepherdPlayers
                 stp.awardXp(TeamWeight.xpPerSecond)
                 
         if Game.currentRound.updateStats and Game.currentRound.state == State.SHEPHERDS_SPAWNED
             for stp in Teams.sheepPlayers
                 stp.timeAsSheepLiving += 1
-
+                
         if (count mod 4 == 0)
             for stp in Teams.sheepPlayers
                 stp.p.addGold(stp.income)

@@ -8,7 +8,8 @@ import Round
 init
     EventListener.add(EVENT_PLAYER_UNIT_SELL) ->
         let u = EventData.getSoldUnit()
-        let stp = EventData.getSellingUnit().toSTP()
+        let tavern = EventData.getSellingUnit()
+        let stp = tavern.toSTP()
 
         if (u.getOwner() != stp.p)
             u.setOwner(stp.p, true)
@@ -21,6 +22,7 @@ init
 
         if Game.currentRound.state == State.SHEPHERDS_SPAWNED
             stp.selectAndPan(u)
+            tavern.remove()
         else 
             u.hide()
             createTTEx(u.getPos3Zero(), vec2(0,0).polarOffset((stp.p.getId() * 30.0).fromDeg(), 60), u.getName(), 10, 3.0, stp.p.getColor().toColor().withAlpha(0)).setVisibility(true)

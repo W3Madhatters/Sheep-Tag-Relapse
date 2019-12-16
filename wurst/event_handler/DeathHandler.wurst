@@ -5,10 +5,19 @@ import Utils
 import STPlayer
 import TeamWeight
 import Teams
+import Modes
 import initlater Game
 import initlater Round
+import AbilityObjEditing
+import ObjectIdGenerator
+import Orders
+import DummyCaster
+import ClosureForGroups
 
-public abstract class DeathHandler
+constant REVIVE_INVULNERABILITY = compiletime(ABIL_ID_GEN.next())
+constant RESPAWN_PAUSE = compiletime(ABIL_ID_GEN.next())
+
+public class DeathHandler
 
     EventListener deathListener
 
@@ -24,6 +33,7 @@ public abstract class DeathHandler
         destroy deathListener
 
     function onSheepDeath(unit sheep, unit killer)
+        print("Super Death")
         let dyingSTP = sheep.getOwner().toSTP()
         let killerSTP = killer.getOwner().toSTP()
 
@@ -42,7 +52,12 @@ public abstract class DeathHandler
 
         Game.currentRound.refreshLeader()
 
-    abstract function onSpiritDeath(unit spirit, unit killer)
+    function onSpiritDeath(unit spirit, unit _killer)
+        printTimed(SPACE + spirit.getOwner().getNameColored() + "|cffffcc00 has been revived|r", TEXT_DURATION)
+        let stp = spirit.getOwner().toSTP()
+        Teams.sheepPlayers.add(stp)
+        Teams.spiritPlayers.remove(stp)
+        reviveSheep(spirit.getPos(), stp)
     
     function awardBounty(STPlayer dyingSTP)
         Teams.shepherdPlayers.forEach() stp ->
@@ -52,18 +67,18 @@ public abstract class DeathHandler
     function destroyFarms(STPlayer dyingSTP)
         dyingSTP.destroyFarms((dyingSTP.deaths > 0) ? 1 : TeamWeight.calculatePercentOfFarmsToDestroy())
 
-    function revive(vec2 pos, STPlayer stp)
-        Teams.sheepPlayers.add(stp)
-        Teams.spiritPlayers.remove(stp)
+    function reviveSheep(vec2 pos, STPlayer stp)
         Game.currentRound.refreshLeader()
         stp.sheep.show()
         stp.sheep.setPos(pos)
         stp.p.select(stp.sheep)
         stp.p.panCameraToTimed(pos, .5)
+        new DummyCaster()..origin(FENCE_CENTER)..owner(stp.p)..delay(.1)..castTarget(REVIVE_INVULNERABILITY, 1, Orders.innerfire, stp.sheep)
 
 public class SurviveDeathHandler extends DeathHandler
 
     override function onSheepDeath(unit sheep, unit killer)
+        print("Survive Death")
         let dyingSTP = sheep.getOwner().toSTP()
 
         Teams.sheepPlayers.remove(dyingSTP)
@@ -80,7 +95,78 @@ public class SurviveDeathHandler extends DeathHandler
         
         super.onSheepDeath(sheep, killer)
 
-    override function onSpiritDeath(unit spirit, unit killer)
-        printTimed(SPACE + spirit.getOwner().getNameColored() + "|cffffcc00 has been revived|r", TEXT_DURATION)
-        let stp = spirit.getOwner().toSTP()
-        revive(spirit.getPos(), stp)
+        
+public class SwitchDeathHandler extends DeathHandler
+
+    override function onSheepDeath(unit sheep, unit killer)
+        print("Switch Death")
+        let dyingSTP = sheep.getOwner().toSTP()
+        let killingSTP = killer.getOwner().toSTP()
+
+        Teams.sheepPlayers.remove(dyingSTP)
+        Teams.shepherdPlayers.add(dyingSTP)
+
+        Teams.shepherdPlayers.remove(killingSTP)
+        Teams.sheepPlayers.add(killingSTP)
+
+        Teams.setAlliances()
+
+        if (Game.currentRound.updateStats)
+            killingSTP.sheepCount += 1
+            killingSTP.sheepPlayed += 1
+        
+        dyingSTP.setIncome(0)
+        dyingSTP.p.setGold(Modes.shepherdGold)
+        killingSTP.p.setGold(Modes.sheepGold)
+
+        dyingSTP.destroyFarms(1)
+        
+        reviveSheep(sheep.getPos(), killingSTP)
+
+        killingSTP.shepherd.hide()
+        forUnitsOfPlayer(killingSTP.p) u -> 
+            if (not u.isDummy() and not u.isHero())
+                u.kill()
+
+        if (dyingSTP.shepherd.isAlive())
+            dyingSTP.selectAndPan(dyingSTP.shepherd..setPos(FENCE_CENTER)..setMana(25)..show())
+            new DummyCaster()..origin(FENCE_CENTER)..owner(dyingSTP.p)..delay(.1)..castTarget(RESPAWN_PAUSE, 1, Orders.sleep, dyingSTP.shepherd)
+        else
+            dyingSTP.createSTUnit(FENCE_CENTER, STUnitIds.HERO_SELECTOR)
+
+        super.onSheepDeath(sheep, killer)
+
+        
+public class VampireDeathHandler extends DeathHandler
+
+    override function onSheepDeath(unit sheep, unit killer)
+        let dyingSTP = sheep.getOwner().toSTP()
+
+        dyingSTP.destroyFarms(1)
+        awardBounty(dyingSTP)
+
+        Teams.sheepPlayers.remove(dyingSTP)
+        Teams.shepherdPlayers.add(dyingSTP)
+
+        Teams.setAlliances()
+        Game.currentRound.teamWeight.setTeamWeight()
+
+        dyingSTP.createSTUnit(FENCE_CENTER, STUnitIds.HERO_SELECTOR)
+        dyingSTP.setIncome(0)
+
+        super.onSheepDeath(sheep, killer)
+
+
+@compiletime function respawnPause()
+    new AbilityDefinitionDreadlordSleep(RESPAWN_PAUSE)..setDummyAbilityLevels()
+    ..presetDurationHero((int lvl) -> 2.0)
+    ..presetStunDuration((int lvl) -> 2.0)
+    ..presetTargetsAllowed((int lvl) -> "friend,enemy,ground,vulnerable,invulnerable")
+
+@compiletime function reviveInvulnerability()
+    new AbilityDefinitionInnerFire(REVIVE_INVULNERABILITY)..setDummyAbilityLevels()
+    ..presetDurationHero((int lvl) -> 3.0)
+    ..presetDefenseIncrease((int lvl) -> 99999)
+    ..presetLifeRegenRate((int lvl) -> 99)
+    ..presetBuffs((int lvl) -> STAbilityIds.REVIVE_INVULNERABILITY_BUFF)
+                

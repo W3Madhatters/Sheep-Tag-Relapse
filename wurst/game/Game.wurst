@@ -6,7 +6,6 @@ import LinkedList
 import STPlayer
 import Teams
 import Constants
-import Utils
 import Host
 import TeamSelector
 import Modes
@@ -21,15 +20,9 @@ public class Game
     static Round currentRound
     static Multiboard statBoard
 
-    static Form form
+    static Form form = null
     static fogmodifier array[MAX_PLAYERS] modifiers
     static boolean setup = true
-
-    static real longestRoundTime = 0.0
-    static string longestRoundString = ""
-    static real shortestRoundTime = 9999999.0
-    static string shortestRoundString = ""
-
 
     static function startRound(TeamSelector teamSelector)
         cancelTimer()
@@ -37,10 +30,18 @@ public class Game
         teamSelector.setTeams()
         currentRound.onStart()
 
+    static function updateRoundType()
+        destroy currentRound
+        currentRound = Modes.newRound()
+
     static function startNewRound()
         currentRound = Modes.newRound()
         refreshLeader()
         if Modes.customSetup
+            printTimed("\n" + GOLD + "Sheep Tag |r" + RELAPSE_GREEN, 60.0)
+            printTimed("By Madhatters", 60.0)
+            printTimed("\n" + GOLD + "Join the Sheep Tag discord at |rhttp://tiny.cc/sheeptag", 60.0)
+            printTimed("\n" + GOLD + "Custom Setup: See Quests for mode options!", 60.0)
             startTimerWithWindow(10, "Mode Selection") ->
                 currentRound.onStart()
         else
@@ -119,18 +120,6 @@ public class Game
                     statBoard.board.display(false)
                     currentRound.gameBoard.board.display(true)
                     currentRound.gameBoard.board.minimalize(not localPlayer.toSTP().visibleLeaderBoard)
-
-    static function updateLeader(real elapsedTime)
-        if (elapsedTime > longestRoundTime)
-            if longestRoundString != ""
-                printTimed(GOLD + "A new leader has emerged!", TEXT_DURATION)
-            longestRoundTime = elapsedTime
-            longestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
-        if (elapsedTime < shortestRoundTime)
-            if shortestRoundString != ""
-                printTimed(GOLD + "A new loser has emerged!", TEXT_DURATION)
-            shortestRoundTime = elapsedTime
-            shortestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
    
     static function beginSetup()
         var pos = vec3(0, 600, 0)
@@ -160,7 +149,10 @@ public class Game
                 RemoveDestructable( gg_dest_B001_0423 )
                 RemoveDestructable( gg_dest_B002_0425 )
                 RemoveDestructable( gg_dest_B003_0426 )
-                createForm()
+                if (not Modes.customSetup)
+                    createForm()
+                else
+                    endSetup()
             
     static function createForm()
         let valueColor = GREEN
@@ -187,9 +179,9 @@ public class Game
                         fields.get(6).select(form, 3)
                     case VAMPIRE 
                         let sheepOpts = fields.get(1)
-                        sheepOpts.select(form, (sheepOpts.options.size() - sheepOpts.options.size() > 4 ? 2 : 1))
+                        sheepOpts.select(form, (sheepOpts.options.size() - (sheepOpts.options.size() > 4 ? 2 : 1)))
                         fields.get(2).select(form, 3)
-                        fields.get(3).select(form, 5)
+                        fields.get(3).select(form, 4)
                         fields.get(4).select(form, 0)
                         fields.get(5).select(form, 5)
                         fields.get(6).select(form, 0)
@@ -248,31 +240,34 @@ public class Game
         Game.form.render()
 
         startTimerWithWindow(30.0, "Setup") () ->
-            setup = false
-            for stp in allPlayers
-                modifiers[stp.index].destr()
-                stp.p.setCameraBoundsToRect(CAMERA_BOUNDS)
-                stp.setCamera()
-                stp.p.panCameraTo(FENCE_CENTER)
+            endSetup()
 
+    static function endSetup()
+        cancelTimer()
+        setup = false
+        for stp in allPlayers
+            modifiers[stp.index].destr()
+            stp.p.setCameraBoundsToRect(CAMERA_BOUNDS)
+            stp.setCamera()
+            stp.p.panCameraTo(FENCE_CENTER)
+
+        if (form != null)
             destroy form
 
-            FogMaskEnable(false)
-            FogEnable(false)
+        FogMaskEnable(false)
+        FogEnable(false)
 
-            Game.startNewRound()
+        Game.startNewRound()
 
-            EnumDestructablesInRectAll(SETUP_RECT) () ->
-                GetEnumDestructable().remove()
+        EnumDestructablesInRectAll(SETUP_RECT) () ->
+            GetEnumDestructable().remove()
 
-            doAfter(.1) () ->
-                SETUP_CENTER.setTerrainType('Lgrd', -1, 5, 1)
+        doAfter(.1) () ->
+            SETUP_CENTER.setTerrainType('Lgrd', -1, 5, 1)
 
-                // FogEnable(true) 
-                for stp in allPlayers
-                    createVision(stp.p, FENCE_RECT, false).start()
-            
-            
+            // FogEnable(true) 
+            for stp in allPlayers
+                createVision(stp.p, FENCE_RECT, false).start()  
             
 
 init

@@ -3,6 +3,9 @@ import Constants
 import AbilityObjEditing
 import DummyRecycler
 
+public function unit.isHero() returns boolean
+    return this.isType(UNIT_TYPE_HERO)
+
 public function unit.isStructure() returns boolean
     return this.isType(UNIT_TYPE_STRUCTURE)
 
@@ -12,7 +15,7 @@ public function unit.isSheep() returns boolean
 public function unit.isSpirit() returns boolean
     return this.getTypeId() == STUnitIds.SPIRIT
 
-public function unit.isSheperd() returns boolean
+public function unit.isShepherd() returns boolean
     return this.getTypeId() == STUnitIds.SHEPHERD
 
 public function unit.isWard() returns boolean

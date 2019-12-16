@@ -40,14 +40,17 @@ public class Modes
                 return "Vampire"
 
     static function newRound() returns Round
+        print("new round " + styleToString(style))
         switch style
             case PRACTICE
-                return new Round()
+                return new SurviveRound()
             case SURVIVE
-                return new Round()
+                print("new round survive")
+                return new SurviveRound()
             case SWITCH
-                return new Round()
+                print("new round switch")
+                return new SwitchRound()
             case VAMPIRE
-                return new Round()
+                return new VampireRound()
 
 

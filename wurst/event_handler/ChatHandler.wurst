@@ -25,7 +25,7 @@ function giveGold(STPlayer stp1, STPlayer stp2, int gold)
     stp1.p.addGold(-1 * gold)
     stp2.p.addGold(gold)
     printTimedToPlayer(SPACE_GOLD + "Gave |r" + gold.toString() + " |cffffcc00gold to |r" + stp2.p.getNameColored(), TEXT_DURATION, stp1.p)
-    printTimedToPlayer(SPACE_GOLD + "Received |r" + gold.toString() + " |cffffcc00gold from |r" + stp1.p.getNameColored(), TEXT_DURATION, stp1.p)
+    printTimedToPlayer(SPACE_GOLD + "Received |r" + gold.toString() + " |cffffcc00gold from |r" + stp1.p.getNameColored(), TEXT_DURATION, stp2.p)
 
 function giveAllGold(STPlayer stp, LinkedList<STPlayer> team)
     let tmp = team.copy()..remove(stp)
@@ -54,7 +54,6 @@ function toggleAfk(STPlayer stp)
             Teams.shepherdPlayers.remove(stp)
             Teams.spiritPlayers.remove(stp)
             Teams.afkPlayers.add(stp)
-            print("AFK BENCHED")
             stp.status = AfkStatus.AFK_BENCHED
         else
             stp.controlAll = false
@@ -78,14 +77,8 @@ function toggleAfk(STPlayer stp)
             stp.status = AfkStatus.ACTIVE
             Teams.shepherdPlayers.add(stp)
             Teams.afkPlayers.remove(stp)
-    print(stp.p.getNameColored() + " active: " + stp.isActive().toString())
-    for stp2 in Teams.afkPlayers
-        print(stp2.toString())
-    if (Game.currentRound.state == State.MODES)
+    if (Game.currentRound.state == State.MODES and not Modes.customSetup)
         Modes.setTeamSelector(new Smart(Teams.getNumSheep())..setTeams())
-    for stp2 in Teams.afkPlayers
-        print(stp2.toString())
-    print("refreshing leader")
     Game.refreshLeader()
 
 function setControl(STPlayer stp1, STPlayer stp2, boolean control)
@@ -108,7 +101,6 @@ function controlCommand(STPlayer stp, string arg)
             setControl(stp, stp2, control)
 
 
-
 init
     EventListener.add(EVENT_PLAYER_CHAT_FILTER) ->
         let stp = GetTriggerPlayer().toSTP()
@@ -116,7 +108,14 @@ init
         if (text.charAt(0) == "-")
             let args = text.reduce().split(" ")
             let command = args.dequeue().toLowerCase()
-            if (Modes.customSetup)
+            print(Game.setup.toString() + " " + command)
+
+            if (stp == Host.host and Game.setup and command == "-custom")
+                Modes.customSetup = true
+                if (Game.form != null)
+                    Game.endSetup()
+
+            if (Modes.customSetup and Game.setup == false)
                 if (stp == Host.host and Game.currentRound.state == State.MODES)
                     switch command
                         case "-gold"
@@ -154,12 +153,15 @@ init
                             Game.startRound(new Smart(args.dequeue().toInt()))
                         case "-switch"
                             Modes.style = Style.SWITCH
+                            Game.updateRoundType()
                             printTimed(SPACE_GOLD + "Set mode to|r switch", TEXT_DURATION)
                         case "-survive"
                             Modes.style = Style.SURVIVE
+                            Game.updateRoundType()
                             printTimed(SPACE_GOLD + "Set mode to|r survive", TEXT_DURATION)
-                        case "-vamp"
+                        case "-vamp" | "-vampire"
                             Modes.style = Style.VAMPIRE
+                            Game.updateRoundType()
                             printTimed(SPACE_GOLD + "Set mode to|r vamp", TEXT_DURATION)
 
                 if (stp == Host.host and Game.currentRound.isCancelable())
@@ -198,8 +200,8 @@ init
                 case "-c"
                     controlCommand(stp, args.dequeue())
                 case "-leader"
-                    printTimedToPlayer("|cffffcc00Leader: |r" + Game.longestRoundString, TEXT_DURATION, stp.p)
-                    printTimedToPlayer("|cffffcc00Loser: |r" + Game.shortestRoundString, TEXT_DURATION, stp.p)
+                    printTimedToPlayer("|cffffcc00Leader: |r" + Round.longestRoundString, TEXT_DURATION, stp.p)
+                    printTimedToPlayer("|cffffcc00Loser: |r" + Round.shortestRoundString, TEXT_DURATION, stp.p)
                 case "-sc"
                     stp.p.displayStats("|cffffcc00Sheep Count|r", p -> p.sheepCount.toString())
                 case "-sp"

@@ -2,15 +2,8 @@ package TestingCommands
 import LinkedList
 import StringUtils
 import ClosureEvents
-import Game
-import Round
-import Constants
-import TeamSelector
-import Teams
 import STPlayer
 import Host
-import Utils
-import Modes
 
 init
     EventListener.add(EVENT_PLAYER_CHAT_FILTER) ->

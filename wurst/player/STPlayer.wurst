@@ -47,6 +47,7 @@ public class STPlayer
     real timeAsSheep = 0.0
     real timeAsSheepLiving = 0.0
     real timeAsSheepFirst = 0.0
+    real timeAsSheepCurrent = 0.0
     int sheepPlayed = 0
     int sheepCount = 0
     int kills = 0
@@ -59,6 +60,7 @@ public class STPlayer
         this.p = p
         this.index = index
         SetPlayerState(p, PLAYER_STATE_RESOURCE_FOOD_CAP, 200)
+        SetPlayerHandicapXP(p, 0)
 
     function isActive() returns boolean
         return p.isPlaying() and (status == AfkStatus.ACTIVE or status == AfkStatus.ACTIVE_BENCHED)

@@ -3,13 +3,17 @@ import WindowedCallback
 
 public module TimerWindow
     
-    static WindowedCallback wcb
+    static WindowedCallback wcb = null
     
     static function startTimerWithWindow(real timeToWait, string title, WindowedCallback cb)
-        wcb = doAfter(timeToWait, title, cb)
+        wcb = doAfter(timeToWait, title) () ->
+            wcb = null
+            cb.call()
 
     static function startTimer(real timeToWait, WindowedCallback cb)
-        wcb = doAfter(timeToWait, cb)
+        wcb = doAfter(timeToWait) () ->
+            wcb = null
+            cb.call()
 
     static function cancelTimer()
         if (wcb != null)
@@ -17,4 +21,4 @@ public module TimerWindow
             wcb = null
 
     static function getElapsedTime() returns real
-        return wcb.getElapsedTime()
+        return (wcb != null) ? wcb.getElapsedTime() : 0.0

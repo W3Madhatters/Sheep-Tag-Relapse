@@ -4,6 +4,7 @@ import LinkedList
 import Constants
 import ClosureEvents
 import Modes
+import initlater Game
 import initlater TeamWeight
 
 public function LinkedList<STPlayer>.displayText(string text)
@@ -77,7 +78,8 @@ init
         Teams.spiritPlayers.remove(stp)
         Teams.shepherdPlayers.remove(stp)
         Teams.afkPlayers.remove(stp)
-        TeamWeight.setTeamWeight()
+        if (Game.currentRound != null)
+            Game.currentRound.teamWeight.setTeamWeight()
 
 
 

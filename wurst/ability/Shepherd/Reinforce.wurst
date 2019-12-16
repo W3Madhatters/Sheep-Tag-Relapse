@@ -8,7 +8,6 @@ import Abilities
 import LinkedList
 import AbilityObjEditing
 import ObjectIdGenerator
-import AbilityIds
 import Utils
 
 constant REINFORCE_ILLUSION = compiletime(ABIL_ID_GEN.next())

@@ -20,5 +20,5 @@ init
         for stp2 in Teams.sheepPlayers
             if (stp != stp2 and localPlayer == stp.p)
                 let pos = stp2.sheep.getPos()
-                PingMinimapEx(pos.x, pos.y, 2.0, 0, 0, 255, false)
+                PingMinimapEx(pos.x, pos.y, 2.0, 255, 255, 255, false)
                 

@@ -159,5 +159,27 @@ public class InitBoard extends Multiboard
 public class SurviveBoard extends Multiboard
     construct()
         super("Sheep Tag " + RELAPSE_GREEN, true, true, false, true)
+
+            
+public class SwitchBoard extends Multiboard
+    override function getSheepValue(STPlayer stp) returns string
+        return (stp == null) ? ",Time" : stp.timeAsSheepCurrent.toTimeString(false)
+
+    override function getShepherdValue(STPlayer stp) returns string
+        return (stp == null) ? ",Time" : stp.timeAsSheepCurrent.toTimeString(false)
+
+    override function getRowCount() returns int
+        return Teams.sheepPlayers.size() + Teams.shepherdPlayers.size() + 2
+
+    construct()
+        super("Sheep Tag " + GREEN + "Switch", false, true, false, true)
+
+            
+public class VampireBoard extends Multiboard
+    override function getRowCount() returns int
+        return Teams.sheepPlayers.size() + Teams.shepherdPlayers.size() + 2
+
+    construct()
+        super("Sheep Tag " + GREEN + "Vampire", false, true, false, true)
  
     

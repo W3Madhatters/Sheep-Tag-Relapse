@@ -2,7 +2,6 @@ package Form
 import LinkedList
 import Constants
 import ClosureEvents
-import Abilities
 
 public class Form
 

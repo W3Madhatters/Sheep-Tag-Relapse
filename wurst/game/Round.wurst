@@ -22,6 +22,11 @@ enum State
 
 public class Round
     use TimerWindow
+    
+    static real longestRoundTime = 0.0
+    static string longestRoundString = ""
+    static real shortestRoundTime = 9999999.0
+    static string shortestRoundString = ""
 
     boolean updateStats = true
 
@@ -29,21 +34,16 @@ public class Round
     Multiboard gameBoard
     DeathHandler deathHandler
     FarmHandler farmHandler
+    TeamWeight teamWeight
 
     State state = State.MODES
-
-    construct()
-        periodic = new PeriodicHandler()
-        gameBoard = new SurviveBoard()
-        deathHandler = new SurviveDeathHandler()
-        farmHandler = new FarmHandler()
-        clean()
 
     ondestroy
         destroy periodic
         destroy gameBoard
         destroy deathHandler
         destroy farmHandler
+        destroy teamWeight
         clean()
 
     function clean()
@@ -59,6 +59,9 @@ public class Round
             stp.deaths = 0
             stp.saves = 0
             stp.farmCount = 0
+            stp.timeAsSheepCurrent = 0
+            stp.shepherd = null
+            stp.sheep = null
             stp.setIncome(0)
             stp.p.setGold(0)
             stp.p.setLumber(0)
@@ -67,39 +70,38 @@ public class Round
     function isCancelable() returns boolean
         return this.state != State.SHEPHERDS_SPAWNED
 
-    function getStartTime() returns real
-        return TeamWeight.spawnTime
-
     function refreshLeader()
         gameBoard.fillMultiboard()
 
     function onStart()
-        state = State.COUNTDOWN
-        Game.refreshLeader()
-        ClearTextMessages()
-        clean()
-        TeamWeight.setTeamWeight()
-        Teams.setAlliances()
-        Teams.sheepPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000Sheep|r|cffffcc00 this round.")
-        Teams.shepherdPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000Shepherd|r|cffffcc00 this round.")
-        Teams.afkPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000sitting out|r|cffffcc00 this round.")
-        
-        periodic.start()
-        
-        printTimed(SPACE + "|Cffffcc00Game starting in 3...|r", TEXT_DURATION)
-        startTimer(1) ->
-            printTimed(SPACE + "|Cffffcc00Game starting in 2...|r", TEXT_DURATION)
-            FogEnable(not Modes.view)
-            Teams.sheepPlayers.forEach(stp -> stp.p.panCameraTo(stp.getStartPosition()))
-            Teams.shepherdPlayers.forEach(stp -> stp.p.panCameraTo(FENCE_CENTER))
+        if (Teams.sheepPlayers.size() < 1)
+            Game.cancelRound()
+        else
+            state = State.COUNTDOWN
+            Game.refreshLeader()
+            ClearTextMessages()
+            clean()
+            teamWeight.setTeamWeight()
+            Teams.setAlliances()
+            Teams.sheepPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000Sheep|r|cffffcc00 this round.")
+            Teams.shepherdPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000Shepherd|r|cffffcc00 this round.")
+            Teams.afkPlayers.displayText(SPACE + "|cffffcc00You are |r|cffff0000sitting out|r|cffffcc00 this round.")
+            
+            printTimed(SPACE + "|Cffffcc00Game starting in 3...|r", TEXT_DURATION)
             startTimer(1) ->
-                printTimed(SPACE + "|Cffffcc00Game starting in 1...|r", TEXT_DURATION)
+                printTimed(SPACE + "|Cffffcc00Game starting in 2...|r", TEXT_DURATION)
+                FogEnable(not Modes.view)
+                Teams.sheepPlayers.forEach(stp -> stp.p.panCameraTo(stp.getStartPosition()))
+                Teams.shepherdPlayers.forEach(stp -> stp.p.panCameraTo(FENCE_CENTER))
                 startTimer(1) ->
-                    onCountdownExpire()
+                    printTimed(SPACE + "|Cffffcc00Game starting in 1...|r", TEXT_DURATION)
+                    startTimer(1) ->
+                        onCountdownExpire()
 
     function onCountdownExpire()
         ClearTextMessages()
         state = State.STARTED
+        periodic.start()
         Game.refreshLeader()
         Teams.sheepPlayers.forEach() stp -> 
             stp.p.setGold(Modes.sheepGold)
@@ -107,8 +109,7 @@ public class Round
         Teams.shepherdPlayers.forEach() stp ->
             stp.p.setGold(Modes.shepherdGold)
             stp.createSTUnit(FENCE_CENTER, STUnitIds.HERO_SELECTOR)
-        let spawnIn = getStartTime()
-        startTimerWithWindow(spawnIn, "Shepherds Released") ->
+        startTimerWithWindow(TeamWeight.spawnTime, "Shepherds Released") ->
             onShepherdRelease()
 
     function onShepherdRelease()
@@ -132,12 +133,13 @@ public class Round
         startTimerWithWindow(Modes.time * 60, "Time Remaining", -> onTimerExpire())
 
     function endCondition()
-        let time = getElapsedTime()
         if (Teams.sheepPlayers.size() == 0)
+            let time = getElapsedTime()
             ClearTextMessages()
             printTimed(GOLD + "The Sheep team survived for |r" + time.toTimeString(false), TEXT_DURATION)
             onEnd(time)
         if (Teams.shepherdPlayers.size() == 0)
+            let time = getElapsedTime()
             ClearTextMessages()
             printTimed(GOLD + "All Shepherds have left the game", TEXT_DURATION)
             onEnd(time)
@@ -147,8 +149,23 @@ public class Round
         printTimed(GOLD + "The Sheep team survived the entire round!", TEXT_DURATION)
         onEnd(Modes.time * 60.0)
 
+    function updateLeader(real elapsedTime)
+        for stp in Teams.sheepPlayers
+            stp.timeAsSheep += elapsedTime
+            if (stp.deaths == 0)
+                stp.timeAsSheepFirst += elapsedTime
+        if (elapsedTime > longestRoundTime)
+            if longestRoundString != ""
+                printTimed(GOLD + "A new leader has emerged!", TEXT_DURATION)
+            longestRoundTime = elapsedTime
+            longestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
+        if (elapsedTime < shortestRoundTime)
+            if shortestRoundString != ""
+                printTimed(GOLD + "A new loser has emerged!", TEXT_DURATION)
+            shortestRoundTime = elapsedTime
+            shortestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
+
     function onEnd(real timeElapsed)
-        clean()
         for stp in allPlayers
             if (stp.status == AfkStatus.AFK_BENCHED or stp.status == AfkStatus.AFK_IN_GAME)
                 if updateStats
@@ -162,10 +179,94 @@ public class Round
             if (stp.status == AfkStatus.ACTIVE_BENCHED and updateStats)
                 stp.setSCToMax()
         if updateStats
-            for stp in Teams.sheepPlayers
-                stp.timeAsSheep += timeElapsed
-                if (stp.deaths == 0)
-                    stp.timeAsSheepFirst += timeElapsed
-            Game.updateLeader(timeElapsed)
+            updateLeader(timeElapsed)
         state = State.FINISHED
+        clean()
         Game.endRound()
+
+
+public class SurviveRound extends Round
+    construct()
+        periodic = new PeriodicHandler()
+        gameBoard = new SurviveBoard()
+        deathHandler = new SurviveDeathHandler()
+        farmHandler = new FarmHandler()
+        teamWeight = new TeamWeight()
+        updateStats = true
+        clean()
+
+
+public class SwitchRound extends Round
+    override function updateLeader(real elapsedTime)
+        STPlayer max = null
+        STPlayer min = null
+        for stp in allPlayers
+            stp.timeAsSheep += stp.timeAsSheepCurrent
+            if (stp.timeAsSheepCurrent > 0)
+                if (max == null or stp.timeAsSheepCurrent > max.timeAsSheepCurrent)
+                    max = stp
+                if (min == null or stp.timeAsSheepCurrent < min.timeAsSheepCurrent)
+                    min = stp
+        if (max != null and max.timeAsSheepCurrent > longestRoundTime)
+            if longestRoundString != ""
+                printTimed(GOLD + "A new leader has emerged!", TEXT_DURATION)
+            longestRoundTime = max.timeAsSheepCurrent
+            longestRoundString = "|cffffcc00" + max.timeAsSheepCurrent.toTimeString(false) + " -|r" + max.toString()
+        if (min != null and min.timeAsSheepCurrent < shortestRoundTime)
+            if shortestRoundString != ""
+                printTimed(GOLD + "A new loser has emerged!", TEXT_DURATION)
+            shortestRoundTime = min.timeAsSheepCurrent
+            shortestRoundString = "|cffffcc00" + min.timeAsSheepCurrent.toTimeString(false) + " -|r" + min.toString()
+
+    override function onTimerExpire()
+        ClearTextMessages()
+        onEnd(Modes.time * 60.0)
+
+    override function onCountdownExpire()
+        Teams.shepherdPlayers.forEach() stp -> 
+            stp.createSheep()
+            stp.sheep.hide()
+        super.onCountdownExpire()
+
+    construct()
+        periodic = new PeriodicHandler()
+        gameBoard = new SwitchBoard()
+        deathHandler = new SwitchDeathHandler()
+        farmHandler = new FarmHandler()
+        teamWeight = new SwitchTeamWeight()
+        updateStats = not Modes.customSetup
+        clean()
+
+    override function isCancelable() returns boolean
+        return true
+
+
+public class VampireRound extends Round
+
+    override function updateLeader(real elapsedTime)
+        for stp in allPlayers
+            stp.timeAsSheep += stp.timeAsSheepCurrent
+            if (stp.deaths == 0)
+                stp.timeAsSheepFirst += stp.timeAsSheepCurrent
+        if (elapsedTime > longestRoundTime)
+            if longestRoundString != ""
+                printTimed(GOLD + "A new leader has emerged!", TEXT_DURATION)
+            longestRoundTime = elapsedTime
+            if (Teams.sheepPlayers.size() > 0)
+                longestRoundString = Teams.sheepPlayers.foldl("|cffffcc00" + elapsedTime.toTimeString(false) + " -|r", (stp, str) -> str + " " + stp.toString())
+            else
+                let max = Teams.shepherdPlayers.peek()
+                longestRoundString = "|cffffcc00" + elapsedTime.toTimeString(false) + " -|r" + max.toString()
+
+    construct()
+        periodic = new PeriodicHandler()
+        gameBoard = new VampireBoard()
+        deathHandler = new VampireDeathHandler()
+        farmHandler = new FarmHandler()
+        teamWeight = new VampireTeamWeight()
+        updateStats = not Modes.customSetup
+        clean()
+
+    override function isCancelable() returns boolean
+        return true
+                    
